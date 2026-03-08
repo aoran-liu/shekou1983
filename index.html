@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蛇口 1983 · 制度遗产数字体验</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style_v2.css">
+</head>
+<body>
+<div id="cursor"></div>
+
+<!-- ✕ 全局退出按钮：固定右上角，始终可见（S0/S1除外） -->
+<button id="globalExit" onclick="exitToHome()">✕ 退出</button>
+
+<!-- ========== S0: 开场动画 ========== -->
+<section class="screen" id="s0">
+  <video class="screen-video" id="s0Video" src="assets/s0-intro.mp4" muted playsinline></video>
+  <div class="s0-fallback"></div>
+  <div class="s0-vignette"></div>
+  <div class="scanlines"></div>
+  <div class="s0-content" id="s0Content">
+    <p class="eyebrow s0-anim">SHENZHEN SHEKOU INDUSTRIAL ZONE · 1979–1992</p>
+    <h1 class="s0-title s0-anim">蛇口<span class="red">1983</span></h1>
+    <p class="s0-sub s0-anim">制度遗产数字体验计划</p>
+    <div class="h-line s0-anim"></div>
+    <p class="s0-quote s0-anim">「时间就是金钱，效率就是生命」</p>
+    <p class="s0-quote2 s0-anim">—— 1979年，蛇口，中国改革开放第一声</p>
+    <button class="btn-start s0-anim" onclick="playIntroScene()"><span>进入历史 →</span></button>
+  </div>
+  <p class="s0-credit" id="s0Credit">哈尔滨工业大学（深圳）设计学 · 刘傲然</p>
+</section>
+
+<!-- ========== S1: 身份选择 ========== -->
+<section class="screen" id="s1">
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg')"></div>
+  <div class="dark-overlay"></div>
+  <div class="s1-wrap">
+    <div class="s1-left">
+      <p class="eyebrow">1979年·蛇口·你是谁</p>
+      <h2 class="s1-title">选择你的<em>历史身份</em></h2>
+      <p class="s1-desc">每一个身份，都是真实存在过的人。<br>你的选择，决定你以哪种视角见证这段历史。</p>
+      <div class="timeline-preview">
+        <div class="tp-item active">1979 开山</div>
+        <div class="tp-dot">→</div>
+        <div class="tp-item">1981 计件</div>
+        <div class="tp-dot">→</div>
+        <div class="tp-item">1983 合同</div>
+        <div class="tp-dot">→</div>
+        <div class="tp-item">1984 招标</div>
+        <div class="tp-dot">→</div>
+        <div class="tp-item">1985 保险</div>
+        <div class="tp-dot">→</div>
+        <div class="tp-item">1986 选举</div>
+        <div class="tp-dot">→</div>
+        <div class="tp-item">结算</div>
+      </div>
+    </div>
+    <div class="identity-grid">
+      <div class="id-card-choice" onclick="chooseIdentity('worker')" data-id="worker">
+        <div class="idc-icon">👷</div>
+        <div class="idc-name">张建国</div>
+        <div class="idc-role">码头装卸工</div>
+        <div class="idc-origin">汕头来的第一代务工者</div>
+        <div class="idc-trait">主线视角 · 亲历全部制度变迁</div>
+        <div class="idc-tag recommended">推荐</div>
+      </div>
+      <div class="id-card-choice" onclick="chooseIdentity('woman')" data-id="woman">
+        <div class="idc-icon">👩‍🏭</div>
+        <div class="idc-name">林阿芳</div>
+        <div class="idc-role">凯达厂女工</div>
+        <div class="idc-origin">东莞来的年轻女工</div>
+        <div class="idc-trait">情感视角 · 见证女性在改革中的处境</div>
+      </div>
+      <div class="id-card-choice" onclick="chooseIdentity('manager')" data-id="manager">
+        <div class="idc-icon">📋</div>
+        <div class="idc-name">陈志远</div>
+        <div class="idc-role">劳资处干部</div>
+        <div class="idc-origin">从北京下派的改革干部</div>
+        <div class="idc-trait">决策视角 · 制度背后的设计者</div>
+      </div>
+      <div class="id-card-choice" onclick="chooseIdentity('elder')" data-id="elder">
+        <div class="idc-icon">🧓</div>
+        <div class="idc-name">老赵</div>
+        <div class="idc-role">老工人·怀旧者</div>
+        <div class="idc-origin">在大锅饭时代做了二十年工</div>
+        <div class="idc-trait">反思视角 · 守旧者眼中的剧变</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== S2: 幕一·1979·炸山 ========== -->
+<section class="screen" id="s2">
+  <video class="screen-video" id="s0VideoCopy" src="assets/s0-intro.mp4" muted loop playsinline></video>
+  <div class="screen-video s2-fallback" style="background:url('assets/bg-dock.jpg') center/cover"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.55)"></div>
+  <div class="act-content">
+    <div class="act-header">
+      <span class="act-year">1979</span>
+      <span class="act-slash">/</span>
+      <span class="act-name">炸山开路</span>
+    </div>
+    <div class="act-story">
+      <p>1979年7月，招商局蛇口工业区正式破土动工。</p>
+      <p>这片荒野的第一声炮响，震碎的不只是山石——<br>
+      它震碎的是「干多干少一个样」的几十年惯例。</p>
+      <div class="quote-box">
+        <div class="qb-speaker">袁庚</div>
+        <div class="qb-text">「时间就是金钱，效率就是生命。」<br>
+        ——这句话，当时在全国引发了轩然大波。</div>
+      </div>
+      <p>你是第一批来到蛇口的工人。<br>铁锹、炸药、荒地——还有一个模糊的承诺：<strong>在这里，多干的人会多得。</strong></p>
+    </div>
+    <div class="act-archive">
+      <div class="archive-item unlocked" onclick="openArchive('slogan')">
+        <span class="ai-icon">📜</span>
+        <span class="ai-text">档案：「时间就是金钱」标语原件</span>
+        <span class="ai-arrow">→</span>
+      </div>
+    </div>
+    <!-- S2 动态选择区：injectS2() 注入 -->
+    <div id="s2-choices" style="margin-top:8px"></div>
+  </div>
+</section>
+
+<!-- ========== S3: 幕二·1981·计件 ========== -->
+<section class="screen" id="s3">
+  <div class="bg-img" id="s3Bg" style="background-image:url('assets/bg-dock.jpg');filter:sepia(40%) brightness(.4)"></div>
+  <video class="screen-video" id="s3Video" src="assets/s2-dock-loop.mp4" muted loop playsinline></video>
+  <div class="scene-grad-right"></div>
+
+  <!-- 视差层：集装箱用img标签保持真透明 -->
+  <div class="pl" id="pl0" style="background-image:url('assets/bg-dock.jpg');filter:sepia(45%) brightness(.45)"></div>
+  <div class="pl" id="pl1" style="pointer-events:none">
+    <img src="assets/fg-containers.png"
+      style="position:absolute;bottom:-2%;left:48%;transform:translateX(-50%);
+             width:64%;height:auto;object-fit:contain;
+             filter:sepia(30%) brightness(.75) contrast(1.1);
+             mix-blend-mode:normal">
+  </div>
+
+  <!-- 点击特效层 -->
+  <div class="effects-layer" id="fx3"></div>
+
+  <!-- NPC 立绘：右下角大图 -->
+  <div class="npc-portrait" id="npcPortrait">
+    <img src="assets/npc-afang.png" onerror="this.style.display='none'">
+  </div>
+
+  <!-- 对话框：底部横跨场景区 -->
+  <div class="npc-dialog-bar" id="npcDialogBar">
+    <div class="ndb-name" id="npc-name-el">阿芳 · 凯达厂工友</div>
+    <div class="ndb-text" id="npcText">快点！这批货赶着出口，超额完成今天的指标能多拿奖金！</div>
+  </div>
+
+  <!-- 右侧面板（数据 + 按钮） -->
+  <div class="panel">
+
+    <!-- 地点 + 日期 -->
+    <!-- 可滚动内容区 -->
+    <div class="panel-scroll">
+      <div class="panel-loc-row">
+        <div class="sh-date-inline">1981年3月1日 · 星期三 · 晴 · 28°C</div>
+        <div class="sh-loc-inline" id="sh-loc-el">📍 招商局蛇口码头 · 计件工资制第一天</div>
+      </div>
+
+      <!-- 数据卡 -->
+      <div class="stats-grid">
+        <div class="stat-box">
+          <div class="sico">💰</div>
+          <div class="sval" id="wage">¥ 0.00</div>
+          <div class="slbl">实时工资</div>
+        </div>
+        <div class="stat-box">
+          <div class="sico">📦</div>
+          <div class="sval" id="boxes">0 / 100</div>
+          <div class="slbl">完成 / 目标</div>
+        </div>
+        <div class="stat-box">
+          <div class="sico">⏱</div>
+          <div class="sval" id="timer">09:00</div>
+          <div class="slbl">剩余时间</div>
+        </div>
+        <div class="stat-box">
+          <div class="sico">💪</div>
+          <div class="sval" id="stamina">●●●●●</div>
+          <div class="slbl">体力</div>
+        </div>
+      </div>
+
+      <!-- 进度条 -->
+      <div class="prog-block">
+        <div class="prog-row">
+          <span class="prog-lbl">今日进度</span>
+          <div class="prog-track"><div class="prog-fill" id="progBoxes" style="width:0%"></div></div>
+          <span class="prog-n" id="progN">0%</span>
+        </div>
+        <div class="prog-row">
+          <span class="prog-lbl">超额奖励</span>
+          <div class="prog-track"><div class="prog-fill gold" id="progBonus" style="width:0%"></div></div>
+          <span class="prog-n" id="progBonusN">¥0</span>
+        </div>
+      </div>
+
+      <!-- 搬运按钮 -->
+      <button class="work-btn" id="workBtn" onclick="doWork(null)">
+        <span class="work-btn-icon" id="workBtnIcon">🧱</span>
+        <span class="work-btn-label">搬运货物</span>
+        <span class="work-btn-hint">点击搬运，积累计件工资</span>
+      </button>
+
+      <div class="archive-btn" id="archiveBtn3" onclick="openArchive('wage')">🔒 完成任务后解锁历史档案</div>
+
+      <!-- 随时可收工结算 -->
+      <button id="collectBtn" onclick="collectWage()" style="display:none;
+        width:100%;padding:11px;margin-top:8px;
+        background:rgba(200,150,42,.15);
+        border:1px solid rgba(200,150,42,.4);
+        color:var(--gold);font-size:11px;letter-spacing:3px;
+        cursor:pointer;font-family:inherit;transition:all .2s;
+      " onmouseover="this.style.background='rgba(200,150,42,.25)'"
+         onmouseout="this.style.background='rgba(200,150,42,.15)'">
+        💰 收工结算
+      </button>
+
+      <!-- 立场标签 -->
+      <div id="stanceTags" style="margin-top:6px;padding:8px 0;border-top:1px solid rgba(255,255,255,.05);min-height:32px">
+        <span style="font-size:10px;color:rgba(255,255,255,.2);letter-spacing:1px">选择将影响你的历史角色</span>
+      </div>
+    </div>
+
+    <!-- 固定底部退出按钮 -->
+    <button class="panel-exit" onclick="if(confirm('退出当前体验？进度将不会保存。')){clearInterval(G.timerInterval);G.timerInterval=null;restart()}">
+      ✕ 退出，重新选择身份
+    </button>
+  </div>
+</section>
+
+<!-- ========== S4: 幕三·1983·合同 ========== -->
+<section class="screen" id="s4">
+  <video class="screen-video" src="assets/s3-contract.mp4" muted loop playsinline id="s4Video"></video>
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(70%) brightness(.2)"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.6)"></div>
+  <div class="act-content">
+    <div class="act-header">
+      <span class="act-year">1983</span>
+      <span class="act-slash">/</span>
+      <span class="act-name">铁饭碗，碎了</span>
+    </div>
+    <div class="act-story">
+      <p>劳资处叫你去谈话。桌上，摆着一份合同。</p>
+      <p>全国第一份劳动合同——<br>上面写着：「企业有权依据生产需要解除劳动关系。」</p>
+      <div class="quote-box">
+        <div class="qb-speaker">阿芳</div>
+        <div class="qb-text">「签了合同，你知道自己的权利在哪里。<br>
+        但不签的话……黄大发昨天就被辞退了，他是全国第一个被合法解雇的工人。」</div>
+      </div>
+      <p>这是一个没有先例的时代。<br>签字的一刻，你不知道自己在开创历史，还是走进陷阱。</p>
+    </div>
+    <div class="contract-visual">
+      <img src="assets/doc-contract.jpg" alt="劳动合同" onerror="this.style.display='none';document.getElementById('contractFallback').style.display='block'">
+      <div id="contractFallback" class="doc-fallback" style="display:none">
+        <div class="doc-fake">
+          <div class="df-title">劳动合同书</div>
+          <div class="df-body">甲方：招商局蛇口工业区<br>乙方：_______________<br><br>
+          第三条：甲方根据生产经营需要，<br>有权依法解除本合同。</div>
+          <div class="df-stamp">蛇口劳资处<br>1983.03</div>
+        </div>
+      </div>
+    </div>
+    <!-- S4 条件选项区：injectS4() 注入 -->
+    <div id="s4-choices" class="choice-row" style="flex-wrap:wrap;gap:10px">
+      <button class="choice-btn" onclick="makeChoiceVal('s4','sign',this)">✍️ 直接签字<br><small>走进未知，接受规则</small></button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== S5: 幕四·1984·招标 ========== -->
+<section class="screen" id="s5">
+  <video class="screen-video" src="assets/s4-bidding.mp4" muted loop playsinline></video>
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(60%) brightness(.15)"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.65)"></div>
+  <div class="act-content act-content-wide">
+    <div class="act-header">
+      <span class="act-year">1984</span>
+      <span class="act-slash">/</span>
+      <span class="act-name">第一次招标</span>
+    </div>
+    <div class="act-story">
+      <p>码头要扩建，三家单位来竞标。<br>
+      在全国其他地方，这种项目只有一个结果：谁关系硬，谁拿。</p>
+      <p>但在蛇口，袁庚说：<strong>按标书说话。</strong></p>
+    </div>
+    <div class="bid-table">
+      <div class="bid-header">
+        <span>单位</span><span>报价</span><span>工期</span><span>质量保证</span><span>背景</span>
+      </div>
+      <div class="bid-row" id="bidA" onclick="selectBid('A')">
+        <span>深圳建工一处</span>
+        <span class="bid-price">¥ 48万</span>
+        <span>90天</span>
+        <span>★★★★☆</span>
+        <span class="bid-note">无背景关系</span>
+      </div>
+      <div class="bid-row" id="bidB" onclick="selectBid('B')">
+        <span>香港合发工程</span>
+        <span class="bid-price">¥ 52万</span>
+        <span>75天</span>
+        <span>★★★★★</span>
+        <span class="bid-note">港资，技术强</span>
+      </div>
+      <div class="bid-row highlight" id="bidC" onclick="selectBid('C')">
+        <span>省建五公司</span>
+        <span class="bid-price">¥ 61万</span>
+        <span>120天</span>
+        <span>★★★☆☆</span>
+        <span class="bid-note red-text">⚠️ 领导关系户</span>
+      </div>
+    </div>
+    <div class="quote-box" style="margin-top:16px">
+      <div class="qb-speaker">阿芳悄声说</div>
+      <div class="qb-text">「上面有人打招呼，说省建五公司是某领导亲戚的……你是评委，你来决定。」</div>
+    </div>
+    <button class="btn-next" id="bidConfirm" style="display:none" onclick="confirmBid()">确认投票 →</button>
+  </div>
+</section>
+
+<!-- ========== S6: 幕五·1985·保险 ========== -->
+<section class="screen" id="s6">
+  <video class="screen-video" src="assets/s5-accident.mp4" muted loop playsinline></video>
+  <div class="bg-img" style="background-image:url('assets/bg-accident.jpg');filter:sepia(50%) brightness(.25)"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.6)"></div>
+  <div class="act-content">
+    <div class="act-header">
+      <span class="act-year">1985</span>
+      <span class="act-slash">/</span>
+      <span class="act-name">王福的事故</span>
+    </div>
+    <div class="act-story">
+      <p>工友王福从集装箱上摔下来了。</p>
+      <p>救护车赶来，但医院要先付钱。<br>
+      王福没有参加蛇口今年新推行的<strong>社会保险制度</strong>——<br>
+      他觉得每月扣钱没必要，这辈子没出过事。</p>
+      <div class="injury-card">
+        <div class="ic-label">王福 · 诊断书</div>
+        <div class="ic-content">右腿骨折，需住院治疗 14天<br>
+        预计费用：<strong>¥ 380元</strong><br>
+        社保报销：<span class="red">¥ 0（未参保）</span></div>
+      </div>
+      <p>大家开始凑钱。但凑够了又能怎样——<br>
+      这一次之后，还会有下一次。</p>
+      <div class="quote-box">
+        <div class="qb-speaker">阿芳</div>
+        <div class="qb-text">「内地的工厂，出了事连凑钱的人都没有。<br>
+        但我们这里好歹有保险制度——可惜王福没买。」</div>
+      </div>
+    </div>
+    <!-- solidarity>=2 时额外事件注入区 -->
+    <div id="s6-solidarity-event" style="display:none"></div>
+    <div class="choice-row">
+      <button class="choice-btn" onclick="makeChoiceVal('s6','help',this)">💰 参与凑钱<br><small>帮王福渡过难关</small></button>
+      <button class="choice-btn" onclick="makeChoiceVal('s6','insurance',this)">📋 推动全员参保<br><small>从制度上解决问题</small></button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== S7: 幕六·1986·选举 ========== -->
+<section class="screen" id="s7">
+  <video class="screen-video" src="assets/s6-vote.mp4" muted loop playsinline></video>
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(60%) brightness(.18)"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.6)"></div>
+  <div class="act-content">
+    <div class="act-header">
+      <span class="act-year">1986</span>
+      <span class="act-slash">/</span>
+      <span class="act-name">一张选票</span>
+    </div>
+    <div class="act-story">
+      <p>蛇口工业区召开管委会换届选举。</p>
+      <p>这在全中国是第一次——<br>
+      <strong>不是上面任命，而是工人投票选出管理者。</strong></p>
+      <p>你手里的这张选票，轻得像一片纸，<br>
+      但在1986年，它比山还重。</p>
+    </div>
+    <!-- S7 根据三值动态渲染：injectS7() 注入 -->
+    <div id="s7-vote-content"></div>
+  </div>
+</section>
+
+<!-- ========== S8: 幕七·蛇口风波 ========== -->
+<section class="screen" id="s8">
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(80%) brightness(.12)"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.72)"></div>
+  <div class="act-content">
+    <div class="act-header">
+      <span class="act-year">1988</span>
+      <span class="act-slash">/</span>
+      <span class="act-name" id="s8-tag">蛇口风波</span>
+    </div>
+    <div class="act-story">
+      <p id="s8-title" style="font-size:22px;font-weight:900;color:var(--white)">「你们来打工，是自私的」</p>
+      <p id="s8-body">一群大学生来到蛇口礼堂，说：「你们来蛇口打工，是为了个人利益，是自私的。」<br><br>
+      台下的工人们沉默了一会儿，然后——有人站起来反驳。</p>
+      <div class="quote-box" style="border-color:var(--red)">
+        <div class="qb-speaker">阿芳</div>
+        <div class="qb-text" id="s8-afang-quote">「个人利益和国家利益，为什么一定要对立？我搬一箱货，国家出口创了汇——这不是自私，这是蛇口模式。」</div>
+      </div>
+    </div>
+    <div class="choice-row" id="s8-choices">
+      <button class="choice-btn" onclick="finalChoice('clap',this)">👏 鼓掌<br><small>支持这位工人</small></button>
+      <button class="choice-btn" onclick="finalChoice('silent',this)">🤫 沉默<br><small>不表态</small></button>
+      <button class="choice-btn" onclick="finalChoice('doubt',this)">🤔 存疑<br><small>这问题没那么简单</small></button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== S9: 结算报告 ========== -->
+<section class="screen" id="s9">
+  <video class="screen-video" src="assets/s7-ending.mp4" muted loop playsinline></video>
+  <div class="bg-img" style="background-image:url('assets/bg-village.jpg');filter:sepia(80%) brightness(.12)"></div>
+  <div class="dark-overlay" style="background:rgba(0,0,0,0.7)"></div>
+  <div class="report-wrap">
+    <div class="report-card">
+      <div class="rpt-top">
+        <span class="rpt-tag">PERSONAL REPORT · 1979–1992</span>
+        <div class="rpt-identity" id="rptIdentity">—</div>
+        <div class="rpt-name" id="rptName">—</div>
+      </div>
+      <div class="rpt-hr"></div>
+      <div class="rpt-grid">
+        <div class="rg-item"><div class="rg-val" id="r-boxes">—</div><div class="rg-lbl">搬运总箱数</div></div>
+        <div class="rg-item"><div class="rg-val" id="r-wage">—</div><div class="rg-lbl">累计工资</div></div>
+        <div class="rg-item"><div class="rg-val" id="r-choices">—</div><div class="rg-lbl">关键选择</div></div>
+        <div class="rg-item"><div class="rg-val" id="r-archives">—</div><div class="rg-lbl">解锁档案</div></div>
+      </div>
+      <div class="rpt-verdict">
+        <div class="rv-label" id="rptEndingTag" style="font-size:11px;letter-spacing:3px;color:var(--gold);margin-bottom:6px">结局 —</div>
+        <div class="rv-text" id="rptVerdict">—</div>
+      </div>
+      <!-- 三维价值条 -->
+      <div class="rpt-values" id="rptValues"></div>
+      <div class="rpt-history-box">
+        <div class="rhb-title">📊 你的1983 vs 中国</div>
+        <div class="rhb-text" id="rptHistory">—</div>
+      </div>
+      <div class="rpt-quote" id="rptQuote">—</div>
+      <div class="rpt-btns">
+        <button class="rpt-btn main" onclick="goTo('s10')">查看解锁档案 →</button>
+        <button class="rpt-btn sec" onclick="restart()">重新体验</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== S10: 历史档案馆 ========== -->
+<section class="screen" id="s10">
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(80%) brightness(.12)"></div>
+  <div class="archive-hall">
+    <div class="ah-header">
+      <div>
+        <p class="eyebrow">ARCHIVE HALL · 历史档案馆</p>
+        <h2 class="ah-title">蛇口制度遗产档案</h2>
+      </div>
+      <button class="btn-close" onclick="goTo('s9')">✕ 返回报告</button>
+    </div>
+    <div class="ah-grid" id="archiveGrid">
+      <!-- 由JS动态渲染 -->
+    </div>
+  </div>
+</section>
+
+<!-- ========== 档案弹层 ========== -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal()"></div>
+<div class="modal" id="modal">
+  <button class="modal-close" onclick="closeModal()">✕</button>
+  <div class="modal-content" id="modalContent"></div>
+</div>
+
+<!-- ========== 过场黑屏 ========== -->
+<div class="transition-cover" id="transCover"></div>
+
+<!-- 音频控制条 -->
+<div id="audioBar" style="opacity:.6">
+  <button id="bgmMuteBtn" onclick="Audio.toggleMute()" title="开/关音效">🔊</button>
+  <span id="bgmLabel">— 无BGM —</span>
+  <button id="bgmTtsBtn" onclick="Audio.toggleTTS()" title="开/关朗读">🗣️</button>
+</div>
+
+<script src="app_v2.js?v=1772994953"></script>
+</body>
+</html>
