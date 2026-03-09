@@ -1565,7 +1565,7 @@ const SCENE_VIDEOS = {
   's5': 'assets/scenes/s5_1984_工地建设_有声.mp4',
   's6': 'assets/scenes/s6_1985_工伤保险_静音.mp4',
   's7': 'assets/scenes/s7_1986_民主选举_有声.mp4',
-  // 's8': 待补充
+  's8': 'assets/scenes/s8_1988_礼堂辩论_有声.mp4',
 };
 
 function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen) {
@@ -1869,7 +1869,7 @@ function playIntroScene() {
   `;
 
   overlay.innerHTML = `
-    <video id="introVid" src="assets/intro.mp4" playsinline
+    <video id="introVid" src="assets/raw/原始_开场视频_3月7日.mp4" playsinline
       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55"></video>
     <div style="position:relative;z-index:2;max-width:720px;padding:0 40px;text-align:center">
       <p id="introLine" style="
