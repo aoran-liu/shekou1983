@@ -180,13 +180,26 @@ const SFX = (() => {
     }, 80);
   }
 
+  // 打字机音效：可停止实例
+  let _twAudio = null;
+  function playTypewriter() {
+    if (_twAudio) { _twAudio.pause(); _twAudio.currentTime = 0; }
+    _twAudio = new window.Audio(BASE + 'typewriter.mp3');
+    _twAudio.volume = 0.4;
+    _twAudio.play().catch(() => {});
+  }
+  function stopTypewriter() {
+    if (_twAudio) { _twAudio.pause(); _twAudio = null; }
+  }
+
   return {
     boxDrop:   () => playOnce('box-drop.mp3', 0.55),
     coin:      () => playOnce('coin.mp3', 0.8),
     complete:  () => playOnce('complete.mp3', 0.7),
     stamp:     () => playOnce('stamp.mp3', 0.9),
     pageFlip:  () => playOnce('page-flip.mp3', 0.6),
-    typewriter:() => playOnce('typewriter.mp3', 0.4),
+    typewriter: playTypewriter,
+    stopTypewriter,
     applause:  () => playOnce('applause.mp3', 0.65),
     startHarbor, stopHarbor,
   };
@@ -327,6 +340,7 @@ function goTo(id) {
   const oldTts = document.getElementById('ttsPlayer');
   if (oldTts) { oldTts.pause(); oldTts.remove(); }
   Audio.stopSpeak();
+  SFX.stopTypewriter(); // 切幕时停打字机音效
 
   // 港口环境音：进S3时开，离开时关
   if (id === 's3') { SFX.startHarbor(); }
@@ -410,7 +424,7 @@ function chooseIdentity(id) {
   // 防重复点击：已选过就忽略
   if (G.identity) return;
   G.identity = id;
-  SFX.stamp();
+  setTimeout(() => SFX.stamp(), 150); // 延迟到选中动画后
   G.values = { reform: 0, solidarity: 0, agency: 0 };
   document.querySelectorAll('.id-card-choice').forEach(c => {
     c.classList.remove('selected');
@@ -1682,9 +1696,9 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
       </div>
 
       <div class="hm-footer">
-        <button class="hm-close" onclick="Audio.stopSpeak();const t=document.getElementById('ttsPlayer');if(t){t.pause();t.remove();}document.getElementById('historyModal').remove()" title="关闭，停留在当前页">✕</button>
+        <button class="hm-close" onclick="Audio.stopSpeak();SFX.stopTypewriter();const t=document.getElementById('ttsPlayer');if(t){t.pause();t.remove();}document.getElementById('historyModal').remove()" title="关闭，停留在当前页">✕</button>
         <button class="hm-next" id="historyNextBtn"
-          onclick="Audio.stopSpeak();const tp=document.getElementById('ttsPlayer');if(tp){tp.pause();tp.remove();}document.getElementById('historyModal').remove();transition(()=>goTo('${nextScreen}'))"
+          onclick="Audio.stopSpeak();SFX.stopTypewriter();const tp=document.getElementById('ttsPlayer');if(tp){tp.pause();tp.remove();}document.getElementById('historyModal').remove();transition(()=>goTo('${nextScreen}'))"
           disabled>${nextLabel} (3)</button>
       </div>
     </div>`;
@@ -1941,7 +1955,7 @@ function playIntroScene() {
   `;
 
   overlay.innerHTML = `
-    <video id="introVid" src="assets/intro.mp4" muted playsinline
+    <video id="introVid" src="assets/intro.mp4" playsinline
       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55"></video>
     <div style="position:relative;z-index:2;max-width:720px;padding:0 40px;text-align:center">
       <p id="introLine" style="
@@ -1969,8 +1983,8 @@ function playIntroScene() {
   requestAnimationFrame(() => requestAnimationFrame(() => { overlay.style.opacity = '1'; }));
   const vid = document.getElementById('introVid');
   if (vid) {
-    vid.muted = true;
-    // 尝试自动播放；若被拦截，点击任意处触发
+    // 开场视频保留原声，不静音
+    // 尝试自动播放；若被拦截（有声视频需用户交互），点击任意处触发
     vid.play().catch(() => {
       const resume = () => { vid.play().catch(()=>{}); document.removeEventListener('click', resume); document.removeEventListener('keydown', resume); };
       document.addEventListener('click', resume);
