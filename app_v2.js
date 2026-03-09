@@ -1592,8 +1592,8 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
     <div class="hm-card">
       ${vid ? `
       <div class="hm-video-wrap">
-        <video src="${vid}" autoplay ${hasAudio ? "" : "muted"} loop playsinline
-          ${hasAudio ? 'id="hmVid" style="opacity:.7"' : ''}></video>
+        <video src="${vid}" autoplay muted playsinline
+          id="hmVid" style="opacity:.7"></video>
         <div class="hm-video-overlay"></div>
         <div class="hm-video-year">${yearLabel}</div>
       </div>` : `
@@ -1617,13 +1617,15 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
     </div>`;
   document.body.appendChild(modal);
 
-  // 视频音量调低（不遮旁白）
-  if (hasAudio) {
-    setTimeout(() => {
-      const v = document.getElementById('hmVid');
-      if (v) v.volume = 0.12;
-    }, 100);
-  }
+    // 背景视频：全静音，播完暂停在最后一帧
+  setTimeout(() => {
+    const v = document.getElementById('hmVid');
+    if (v) {
+      v.muted = true;
+      v.volume = 0;
+      v.addEventListener('ended', () => { v.pause(); }, { once: true });
+    }
+  }, 100);
 
   // 打字机效果
   const narEl = document.getElementById('hmNarrative');
@@ -1668,27 +1670,23 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
 
 // 打字机：支持HTML标签（整体输出，逐字显示纯文本部分）
 function typewriterHTML(el, html, msPerChar) {
-  // 先设置完整HTML（保留标签），再逐字淡入
-  el.innerHTML = html;
-  const chars = el.querySelectorAll ? null : null;
-  // 简单实现：把text node拆成span逐个显示
-  const text = el.innerText;
-  el.innerHTML = html.replace(/(<[^>]+>)/g, '$1')
-    .split('').map((ch, i) =>
-      ch === '<' ? ch : // 跳过标签起始（实际上html已经被设置，这里用另一种方式）
-      `<span class="typewriter-char" style="animation-delay:${i * msPerChar}ms">${ch === '\n' ? '<br>' : ch}</span>`
-    ).join('');
-  // 更简洁方式：直接用innerHTML + CSS动画
-  el.innerHTML = '';
+  // 先把完整文字写进去，撑开容器高度，避免逐字时跳动
+  // 用 color: transparent 隐藏，再逐字变为可见
   const div = document.createElement('div');
   div.innerHTML = html;
   const rawText = div.textContent;
-  let i = 0;
-  const interval = setInterval(() => {
-    if (i >= rawText.length) { clearInterval(interval); el.innerHTML = html; return; }
-    el.textContent = rawText.substring(0, i + 1);
-    i++;
-  }, msPerChar);
+
+  // 将所有字符写入DOM，初始透明
+  el.innerHTML = rawText.split('').map((ch, i) =>
+    ch === '\n'
+      ? `<br>`
+      : `<span style="color:transparent;transition:color 0.05s;transition-delay:${i * msPerChar}ms">${ch}</span>`
+  ).join('');
+
+  // 稍后把每个span改为继承色（触发transition淡入）
+  requestAnimationFrame(() => {
+    el.querySelectorAll('span').forEach(s => { s.style.color = ''; });
+  });
 }
 
 // ══════════════════════════════════════════
@@ -1869,7 +1867,7 @@ function playIntroScene() {
   `;
 
   overlay.innerHTML = `
-    <video id="introVid" src="assets/raw/原始_开场视频_3月7日.mp4" playsinline
+    <video id="introVid" src="assets/raw/原始_开场视频_3月7日.mp4" muted playsinline
       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55"></video>
     <div style="position:relative;z-index:2;max-width:720px;padding:0 40px;text-align:center">
       <p id="introLine" style="
@@ -1896,7 +1894,15 @@ function playIntroScene() {
   // 淡入
   requestAnimationFrame(() => requestAnimationFrame(() => { overlay.style.opacity = '1'; }));
   const vid = document.getElementById('introVid');
-  if (vid) vid.play().catch(()=>{});
+  if (vid) {
+    vid.muted = true;
+    // 尝试自动播放；若被拦截，点击任意处触发
+    vid.play().catch(() => {
+      const resume = () => { vid.play().catch(()=>{}); document.removeEventListener('click', resume); document.removeEventListener('keydown', resume); };
+      document.addEventListener('click', resume);
+      document.addEventListener('keydown', resume);
+    });
+  }
 
   // 叙事文字序列
   const lines = [
