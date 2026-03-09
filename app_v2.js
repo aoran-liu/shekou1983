@@ -127,6 +127,71 @@ const Audio = (() => {
            playTense, playJoyful, playAmbient, playSolemn, stopBgm, updateBar };
 })();
 
+// ── 音效系统 ──────────────────────────────
+const SFX = (() => {
+  const BASE = 'assets/sfx/';
+  const pool = {}; // 缓存 Audio 对象
+
+  function play(name, volume = 1.0, offset = 0) {
+    try {
+      // 短音效用缓存（避免反复创建），环境音单独实例
+      if (!pool[name]) pool[name] = new window.Audio(BASE + name);
+      const a = pool[name];
+      a.volume = volume;
+      a.currentTime = offset;
+      a.play().catch(() => {});
+    } catch(e) {}
+  }
+
+  // 短音效每次创建新实例，可同时多个叠加
+  function playOnce(name, volume = 1.0) {
+    try {
+      const a = new window.Audio(BASE + name);
+      a.volume = volume;
+      a.play().catch(() => {});
+    } catch(e) {}
+  }
+
+  // 港口环境音（循环，进S3时开，离开时淡出停止）
+  let harborAudio = null;
+  function startHarbor() {
+    if (harborAudio) return;
+    harborAudio = new window.Audio(BASE + 'harbor-ambient.mp3');
+    harborAudio.loop = true;
+    harborAudio.volume = 0;
+    harborAudio.play().catch(() => {});
+    // 淡入
+    let v = 0;
+    const t = setInterval(() => {
+      v = Math.min(0.18, v + 0.01);
+      harborAudio.volume = v;
+      if (v >= 0.18) clearInterval(t);
+    }, 80);
+  }
+  function stopHarbor() {
+    if (!harborAudio) return;
+    const a = harborAudio;
+    harborAudio = null;
+    let v = a.volume;
+    const t = setInterval(() => {
+      v = Math.max(0, v - 0.02);
+      a.volume = v;
+      if (v <= 0) { clearInterval(t); a.pause(); }
+    }, 80);
+  }
+
+  return {
+    boxDrop:   () => playOnce('box-drop.mp3', 0.55),
+    coin:      () => playOnce('coin.mp3', 0.8),
+    complete:  () => playOnce('complete.mp3', 0.7),
+    stamp:     () => playOnce('stamp.mp3', 0.9),
+    pageFlip:  () => playOnce('page-flip.mp3', 0.6),
+    typewriter:() => playOnce('typewriter.mp3', 0.4),
+    applause:  () => playOnce('applause.mp3', 0.65),
+    startHarbor, stopHarbor,
+  };
+})();
+
 // ── 游戏状态 ──────────────────────────────
 const G = {
   identity: null,       // worker / woman / manager / elder
@@ -263,6 +328,10 @@ function goTo(id) {
   if (oldTts) { oldTts.pause(); oldTts.remove(); }
   Audio.stopSpeak();
 
+  // 港口环境音：进S3时开，离开时关
+  if (id === 's3') { SFX.startHarbor(); }
+  else { SFX.stopHarbor(); }
+
   // BGM切换（暂时关闭）
   // Audio.forScreen(id);
 
@@ -341,6 +410,7 @@ function chooseIdentity(id) {
   // 防重复点击：已选过就忽略
   if (G.identity) return;
   G.identity = id;
+  SFX.stamp();
   G.values = { reform: 0, solidarity: 0, agency: 0 };
   document.querySelectorAll('.id-card-choice').forEach(c => {
     c.classList.remove('selected');
@@ -700,6 +770,9 @@ function doWork(e) {
 
   G.boxes++;
   if (G.boxes > 100) G.bonusBoxes++;
+  SFX.boxDrop();
+  // 每5箱触发一次coin音（不每箱都叫，避免嘈杂）
+  if (G.boxes % 5 === 0) SFX.coin();
 
   const newStaminaMark = G.boxes > 100
     ? Math.floor((G.boxes - 100) / 10)
@@ -726,6 +799,7 @@ function doWork(e) {
   if (G.boxes % 20 === 0) cycleNpc();
   if (G.boxes >= 100 && !G.milestoneShown) {
     G.milestoneShown = true;
+    SFX.complete();
     unlockTaskArchive();
   }
 }
@@ -1428,6 +1502,10 @@ function finalChoice(key, el) {
   if (key === 'cry') addVal('solidarity', 1);
   if (key === 'record') { addVal('reform', 1); addVal('agency', 1); }
   if (key === 'control') addVal('solidarity', -1);
+  // 鼓掌/支持选项触发掌声
+  if (key === 'clap' || key === 'support' || key === 'standup') {
+    setTimeout(() => SFX.applause(), 400);
+  }
 
   // S8 蛇口风波历史注脚弹窗
   showHistoryModal(
@@ -1611,6 +1689,7 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
       </div>
     </div>`;
   document.body.appendChild(modal);
+  SFX.pageFlip();
 
     // 背景视频：全静音，播完暂停在最后一帧
   setTimeout(() => {
@@ -1624,7 +1703,7 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
 
   // 打字机效果
   const narEl = document.getElementById('hmNarrative');
-  if (narEl) typewriterHTML(narEl, text, 18);
+  if (narEl) { SFX.typewriter(); typewriterHTML(narEl, text, 18); }
 
   // TTS音频播放（用currentScreen幕次对应的mp3）
   const ttsKey = currentScreen;  // 严格用当前幕，不fallback
