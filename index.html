@@ -10,8 +10,35 @@
 <body>
 <div id="cursor"></div>
 
-<!-- ✕ 全局退出按钮：固定右上角，始终可见（S0/S1除外） -->
+<!-- ✕ 全局退出按钮：固定右上角，始终可见（S0/P0/S1除外） -->
 <button id="globalExit" onclick="exitToHome()">✕ 退出</button>
+
+<!-- ── 顶部状态栏（v4：6变量全显，S0/P0时隐藏）── -->
+<div id="topBar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:8500;
+  padding:8px 20px;
+  background:rgba(4,10,22,.88);backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(200,150,42,.12);
+  font-size:11px;font-family:inherit;color:rgba(242,232,208,.7);
+  display:none;align-items:center;gap:0;justify-content:center;letter-spacing:1px;min-height:36px;
+"></div>
+
+<!-- ========== P0: 序章·1978冬·为什么来蛇口？（v4新增）========== -->
+<section class="screen" id="p0">
+  <div class="bg-img" style="background-image:url('assets/bg-factory.jpg')"></div>
+  <div class="dark-overlay" style="background:rgba(4,10,22,.7)"></div>
+  <div style="position:relative;z-index:2;width:100%;max-width:860px;margin:0 auto;padding:40px 24px;">
+    <div style="text-align:center;margin-bottom:36px;">
+      <p style="font-size:10px;color:rgba(200,150,42,.7);letter-spacing:5px;margin-bottom:10px">1978年 冬 · 南下的大巴上</p>
+      <h2 style="font-size:clamp(28px,5vw,42px);font-weight:900;color:rgba(242,232,208,.95);line-height:1.2;margin-bottom:12px">
+        你为什么来蛇口？
+      </h2>
+      <p style="font-size:13px;color:rgba(242,232,208,.55);line-height:1.8;max-width:420px;margin:0 auto">
+        你的回答，决定你是谁，以及你将如何见证这段历史。
+      </p>
+    </div>
+    <div id="p0-choices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;"></div>
+  </div>
+</section>
 
 <!-- ========== S0: 开场动画 ========== -->
 <section class="screen" id="s0">

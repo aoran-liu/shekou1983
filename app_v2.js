@@ -213,32 +213,79 @@ const G = {
   wage: 0,
   bonusBoxes: 0,
   stamina: 5,
-  timerSec: 540,
+  timerSec: 210,        // v4: 3分30秒（原来9分钟）
   timerInterval: null,
   gameOver: false,
   eventFired: false,
   event2Fired: false,
-  milestoneShown: false,   // 防止100箱弹窗重复触发
+  eventCFired: false,   // v4新增：事件C（约25箱）
+  milestoneShown: false,
   choices: {},
   archivesUnlocked: new Set(['slogan']),
   playCount: parseInt(localStorage.getItem('sk83_plays') || '0'),
 
-  // ── 三个制度价值变量（核心新增）──
+  // ── 三个制度价值变量 ──
   values: {
     reform:      0,   // 改革认同度  -3 ~ +3
     solidarity:  0,   // 集体意识    -3 ~ +3
     agency:      0,   // 个人能动性  -3 ~ +3
   },
+
+  // ── 三个可见后果变量（v4新增）──
+  outcomes: {
+    money:    0,   // 金钱 / 生存基石
+    trust:    0,   // 信任 / 资源杠杆
+    risk:     0,   // 风险 / 体制张力
+  },
+
+  // ── 幕间回响：记录上一幕决策供下一幕NPC引用 ──
+  lastEcho: null,  // { npc, text, actKey }
 };
 
-// 修改value并钳位，并更新立场标签
+// 修改value并钳位，并更新顶部状态栏
 function addVal(key, delta) {
   G.values[key] = Math.max(-3, Math.min(3, G.values[key] + delta));
+  updateTopBar();
   updateStanceTags();
 }
 function val(key) { return G.values[key]; }
 
-// 立场标签：显示在S3面板底部（或其他幕次）
+// 修改outcome变量（money/trust/risk），钳位，更新顶部栏
+function addOut(key, delta) {
+  const max = { money: 20, trust: 5, risk: 5 };
+  const min = { money: -5, trust: -3, risk: 0 };
+  G.outcomes[key] = Math.max(min[key] || -5, Math.min(max[key] || 10, G.outcomes[key] + delta));
+  updateTopBar();
+}
+function out(key) { return G.outcomes[key]; }
+
+// ── 顶部状态栏（v4：6个变量全显）──────────
+function updateTopBar() {
+  const bar = document.getElementById('topBar');
+  if (!bar) return;
+  const { reform, solidarity, agency } = G.values;
+  const { money, trust, risk } = G.outcomes;
+  const fmtVal = (v) => v > 0 ? `+${v}` : `${v}`;
+  const riskColor = risk >= 3 ? '#e84040' : risk >= 2 ? '#e8a040' : 'rgba(242,232,208,.7)';
+  bar.innerHTML = `
+    <div class="topbar-left">
+      <span class="topbar-item money" title="金钱·生存基石">¥ <b>${money >= 0 ? '+' : ''}${money}</b></span>
+      <span class="topbar-sep">·</span>
+      <span class="topbar-item trust" title="信任·资源杠杆">🤝 <b>${fmtVal(trust)}</b></span>
+      <span class="topbar-sep">·</span>
+      <span class="topbar-item risk" style="color:${riskColor}" title="风险·体制张力">⚠️ <b>${risk}</b></span>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-right">
+      <span class="topbar-item val-reform" title="改革认同">改革 <b>${fmtVal(reform)}</b></span>
+      <span class="topbar-sep">·</span>
+      <span class="topbar-item val-sol" title="集体意识">集体 <b>${fmtVal(solidarity)}</b></span>
+      <span class="topbar-sep">·</span>
+      <span class="topbar-item val-agency" title="个人能动">个人 <b>${fmtVal(agency)}</b></span>
+    </div>`;
+}
+
+// 立场标签：显示在S3面板底部
 function updateStanceTags() {
   const el = document.getElementById('stanceTags');
   if (!el) return;
@@ -337,23 +384,24 @@ if (cursor) {
 
 // ── 屏幕切换 ──────────────────────────────
 function goTo(id) {
-  // 切幕时停止旁白音频（防止上一幕音频流入下一幕）
+  // 切幕时停止旁白音频
   const oldTts = document.getElementById('ttsPlayer');
   if (oldTts) { oldTts.pause(); oldTts.remove(); }
   Audio.stopSpeak();
-  SFX.stopTypewriter(); // 切幕时停打字机音效
+  SFX.stopTypewriter();
 
   // 港口环境音：进S3时开，离开时关
   if (id === 's3') { SFX.startHarbor(); }
   else { SFX.stopHarbor(); }
 
-  // BGM切换（暂时关闭）
-  // Audio.forScreen(id);
-
-  // 控制全局退出按钮显隐
+  // 控制全局退出按钮 & 顶部状态栏显隐
   const exitBtn = $('globalExit');
-  if (exitBtn) exitBtn.style.display = (id === 's0' || id === 's1') ? 'none' : 'block';
+  const topBar = $('topBar');
+  const hideTop = (id === 's0' || id === 'p0' || id === 's1');
+  if (exitBtn) exitBtn.style.display = hideTop ? 'none' : 'block';
+  if (topBar)  topBar.style.display  = hideTop ? 'none' : 'flex';
 
+  if (id === 'p0') setTimeout(injectP0, 80);
   if (id === 's2') setTimeout(injectS2, 80);
   if (id === 's3') setTimeout(initTask, 80);
   if (id === 's4') setTimeout(injectS4, 80);
@@ -364,19 +412,31 @@ function goTo(id) {
   if (id === 's9') setTimeout(buildReport, 80);
   if (id === 's10') setTimeout(buildArchiveHall, 80);
 
-  document.querySelectorAll('.screen.active').forEach(s => {
-    s.classList.remove('visible');
-    const sid = s.id;
-    setTimeout(() => { if (sid !== id) s.classList.remove('active'); }, 700);
-  });
+  // 幕间回响：除开场/p0/s1，其余幕次先弹回响卡片
+  const ECHO_SCREENS = ['s2','s3','s4','s5','s6','s7','s8','s9'];
+  const doSwitch = () => {
+    document.querySelectorAll('.screen.active').forEach(s => {
+      s.classList.remove('visible');
+      const sid = s.id;
+      setTimeout(() => { if (sid !== id) s.classList.remove('active'); }, 700);
+    });
+    const el = $(id);
+    if (!el) return;
+    el.classList.add('active');
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
+    setTimeout(() => {
+      el.querySelectorAll('.screen-video').forEach(v => v.play().catch(()=>{}));
+    }, 100);
+  };
 
-  const el = $(id);
-  if (!el) return;
-  el.classList.add('active');
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('visible')));
-  setTimeout(() => {
-    el.querySelectorAll('.screen-video').forEach(v => v.play().catch(()=>{}));
-  }, 100);
+  if (G.lastEcho && ECHO_SCREENS.includes(id)) {
+    // 先切换屏幕，再弹回响卡片
+    doSwitch();
+    setTimeout(() => showEchoCard(G.lastEcho, id), 300);
+    G.lastEcho = null;
+  } else {
+    doSwitch();
+  }
 }
 
 function transition(fn) {
@@ -398,10 +458,19 @@ window.addEventListener('load', () => {
     if (btn.closest('#audioBar')) return;   // 音频控制栏不触发
     SFX.click();
   }, true); // capture phase，确保最先触发
+
+  // 也捕获 P0 卡片点击（p0-card 动态生成）
+  document.addEventListener('click', e => {
+    if (e.target.closest('.p0-card')) SFX.click();
+  }, true);
+
   const s0 = $('s0');
   s0.classList.add('active');
   const vid = $('s0Video');
   if (vid) vid.play().catch(()=>{});
+  // S0时顶部栏和退出按钮隐藏
+  const tb = $('topBar'); if (tb) tb.style.display = 'none';
+  const ge = $('globalExit'); if (ge) ge.style.display = 'none';
   setTimeout(() => {
     s0.classList.add('visible');
     setTimeout(() => {
@@ -427,6 +496,159 @@ window.addEventListener('load', () => {
 
   // S3 面板退出按钮已在 HTML 中固定，无需动态注入
 });
+
+// ══════════════════════════════════════════
+// P0: 序章·1978冬·为什么来蛇口？（v4新增）
+// 选择原因 = 绑定身份 + 建立初始价值
+// ══════════════════════════════════════════
+const P0_OPTIONS = [
+  {
+    key: 'worker',
+    icon: '💰',
+    reason: '为了挣钱，让家里好过',
+    sub: '家里还有债，蛇口听说工钱比别处高',
+    identity: 'worker',
+    identityLabel: '张建国 · 码头装卸工',
+    effect: () => { addOut('money', 1); addVal('agency', 1); },
+    echo: { npc: '阿强', text: '「为钱来的才踏实，我们一样！干就干最多！」' },
+  },
+  {
+    key: 'manager',
+    icon: '🔥',
+    reason: '为了闯一闯，证明自己',
+    sub: '北京下派，来这里试验一套新制度',
+    identity: 'manager',
+    identityLabel: '陈志远 · 劳资处干部',
+    effect: () => { addOut('risk', 1); addVal('reform', 1); },
+    echo: { npc: '小刘', text: '「陈主任，您这次下来，上面的眼睛都盯着蛇口呢。」' },
+  },
+  {
+    key: 'woman',
+    icon: '🤝',
+    reason: '为了跟老乡互相照应',
+    sub: '梅州来的，跟着姐妹一起，不想一个人孤零零的',
+    identity: 'woman',
+    identityLabel: '林阿芳 · 凯达厂女工',
+    effect: () => { addOut('trust', 1); addVal('solidarity', 1); },
+    echo: { npc: '陈姐', text: '「新来的？跟紧我，这里规矩多，慢慢学。」' },
+  },
+  {
+    key: 'elder',
+    icon: '😶',
+    reason: '被单位调派，习惯了服从',
+    sub: '在大锅饭里干了二十年，这次也没多想',
+    identity: 'elder',
+    identityLabel: '老赵 · 老工人',
+    effect: () => { addOut('trust', 1); addVal('solidarity', 1); addVal('reform', -1); },
+    echo: { npc: '老赵', text: '「又换地方了……反正走到哪里都是干活，无所谓。」' },
+  },
+];
+
+function injectP0() {
+  const el = $('p0-choices');
+  if (!el || el.dataset.injected) return;
+  el.dataset.injected = '1';
+  el.innerHTML = P0_OPTIONS.map(o => `
+    <div class="p0-card" onclick="chooseOrigin('${o.key}')">
+      <div class="p0-icon">${o.icon}</div>
+      <div class="p0-reason">${o.reason}</div>
+      <div class="p0-sub">${o.sub}</div>
+      <div class="p0-identity">${o.identityLabel}</div>
+    </div>`).join('');
+}
+
+function chooseOrigin(key) {
+  if (G.identity) return;
+  const opt = P0_OPTIONS.find(o => o.key === key);
+  if (!opt) return;
+
+  G.identity = opt.identity;
+  G.values = { reform: 0, solidarity: 0, agency: 0 };
+  G.outcomes = { money: 0, trust: 0, risk: 0 };
+
+  // 禁用所有卡片，选中高亮
+  document.querySelectorAll('.p0-card').forEach(c => c.style.pointerEvents = 'none');
+  const cards = document.querySelectorAll('.p0-card');
+  [...cards].forEach((c, i) => {
+    if (P0_OPTIONS[i].key === key) c.classList.add('selected');
+    else c.style.opacity = '0.4';
+  });
+
+  SFX.stamp();
+  opt.effect();  // 施加初始价值效果
+  unlockArchive('ARC_P0_TICKET');
+
+  // 设置S2的回响（P0→S2）
+  G.lastEcho = { ...opt.echo, actKey: 'p0' };
+
+  setTimeout(() => transition(() => goTo('s2')), 600);
+}
+
+// ══════════════════════════════════════════
+// 幕间回响卡片（v4新增）
+// ══════════════════════════════════════════
+function showEchoCard(echo, nextScreen) {
+  // 找到当前幕的上一幕选择摘要
+  const actLabels = {
+    p0: '序章', s2: '幕一·炸山', s3: '幕二·计件',
+    s4: '幕三·合同', s5: '幕四·招标', s6: '幕五·保险', s7: '幕六·选举'
+  };
+  const fromLabel = actLabels[echo.actKey] || '上一幕';
+
+  const card = document.createElement('div');
+  card.id = 'echoCard';
+  card.style.cssText = `
+    position:fixed;inset:0;z-index:7500;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(4,10,22,.75);backdrop-filter:blur(8px);
+    animation:fadeIn .4s ease;
+  `;
+  card.innerHTML = `
+    <div style="
+      max-width:440px;width:90%;
+      background:rgba(10,20,40,.96);
+      border:1px solid rgba(200,150,42,.3);
+      padding:32px 36px;
+      box-shadow:0 0 40px rgba(200,150,42,.1);
+      animation:slideUp .4s ease;
+    ">
+      <div style="font-size:9px;color:rgba(200,150,42,.6);letter-spacing:4px;margin-bottom:16px">
+        ── 幕间回响 · ${fromLabel} ──
+      </div>
+      <div style="font-size:11px;color:rgba(242,232,208,.5);margin-bottom:12px;letter-spacing:1px">
+        💬 ${echo.npc}
+      </div>
+      <div style="
+        font-size:15px;color:rgba(242,232,208,.92);
+        line-height:1.85;font-style:italic;
+        border-left:2px solid rgba(200,150,42,.4);
+        padding-left:14px;margin-bottom:24px;
+      ">${echo.text}</div>
+      <div style="font-size:9px;color:rgba(255,255,255,.25);margin-bottom:20px">
+        ← 因为你在${fromLabel}的选择
+      </div>
+      <button onclick="document.getElementById('echoCard').remove()" style="
+        width:100%;padding:12px;
+        background:transparent;border:1px solid rgba(200,150,42,.3);
+        color:rgba(200,150,42,.8);cursor:pointer;
+        font-size:11px;letter-spacing:3px;font-family:inherit;
+        transition:all .2s;
+      " onmouseover="this.style.background='rgba(200,150,42,.1)'"
+         onmouseout="this.style.background='transparent'">
+        继续 →
+      </button>
+    </div>`;
+  document.body.appendChild(card);
+
+  // 空格/Enter 也可关闭
+  const handler = (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      card.remove();
+      document.removeEventListener('keydown', handler);
+    }
+  };
+  document.addEventListener('keydown', handler);
+}
 
 // ── S1: 身份选择 ──────────────────────────
 function chooseIdentity(id) {
@@ -479,11 +701,11 @@ function injectS2() {
 }
 
 function s2Choose(type, el) {
-  document.querySelectorAll('.s2-choice').forEach(b => { b.classList.remove('selected'); b.disabled = true; });
+    document.querySelectorAll('.s2-choice').forEach(b => { b.classList.remove('selected'); b.disabled = true; });
   el.classList.add('selected');
-  if (type === 'reform')     { addVal('reform', 1); }
-  if (type === 'solidarity') { addVal('solidarity', 1); }
-  if (type === 'agency')     { addVal('agency', 1); }
+  if (type === 'reform')     { addVal('reform', 1); addOut('risk', 1); }
+  if (type === 'solidarity') { addVal('solidarity', 1); addOut('trust', 1); }
+  if (type === 'agency')     { addVal('agency', 1); addOut('money', 1); }
   if (type === 'elder')      { addVal('solidarity', -1); addVal('reform', -1); }
   G.choices.s2 = type;
 
@@ -493,11 +715,19 @@ function s2Choose(type, el) {
     agency:     '家里还有人等着你的工资。先站稳这片土地，再想其他的。',
     elder:      '变化来得太快。二十年的经验，在这片工地上，好像突然不值钱了。',
   };
-  const replyText = replyMap[type] || replyMap.reform;
 
+  // 设置S3回响（S2→S3）
+  const echoMap = {
+    reform:     { npc: '阿强', text: '「我就说嘛，这地方值得来！一起干出个样子！」' },
+    solidarity: { npc: '陈姐', text: '「靠一个人不够用，多跟工友打好关系，以后有用。」' },
+    agency:     { npc: '阿强', text: '「钱钱钱——快来快来，今天多干多拿！」' },
+    elder:      { npc: '老赵', text: '「新规矩不好使，慢慢来，别跟着瞎冲。」' },
+  };
+  G.lastEcho = { ...(echoMap[type] || echoMap.reform), actKey: 's2' };
+
+  const replyText = replyMap[type] || replyMap.reform;
   const choicesEl = $('s2-choices');
   if (choicesEl) {
-    // 短暂显示选中状态后弹窗
     setTimeout(() => {
       showHistoryModal(
         replyText,
@@ -752,8 +982,8 @@ document.addEventListener('click', e => {
 
 function initTask() {
   G.boxes = 0; G.wage = 0; G.bonusBoxes = 0;
-  G.stamina = 5; G.timerSec = 540;
-  G.eventFired = false; G.event2Fired = false; G.gameOver = false;
+  G.stamina = 5; G.timerSec = 210;  // v4: 3分30秒
+  G.eventFired = false; G.event2Fired = false; G.eventCFired = false; G.gameOver = false;
   clearInterval(G.timerInterval);
   updateTaskUI();
 
@@ -777,8 +1007,10 @@ function initTask() {
     updateTimer();
     updateStamina();
     if (G.timerSec % 55 === 0) cycleNpc();
-    if (!G.eventFired && G.boxes >= 30) triggerEvent('A');
-    if (!G.event2Fired && G.boxes >= 60) triggerEvent('B');
+    // v4: 三个事件，触发箱数 12 / 25 / 38
+    if (!G.eventFired  && G.boxes >= 12) triggerEvent('A');
+    if (!G.eventCFired && G.boxes >= 25) triggerEvent('C');
+    if (!G.event2Fired && G.boxes >= 38) triggerEvent('B');
   }, 1000);
 }
 
@@ -1025,22 +1257,49 @@ function collectWage() {
   showWageModal();
 }
 
-// ── S3 内联事件（两次，计时器暂停） ──────────
+// ── S3 内联事件（三次：12箱/25箱/38箱） ──────────
+// 事件C数据（通用，不区分身份）
+const EVENT_C = {
+  speaker: '阿强',
+  text: '你看到阿强把两箱货合并成一箱来记数，旁边的工头没注意。他回头朝你使了个眼神。',
+  opts: [
+    {
+      label: '装没看见，各顾各',
+      key: 'ignore',
+      effect: () => { addVal('agency', 1); },
+      reply: '你低下头继续搬，阿强冲你咧嘴一笑。以后谁也不欠谁的。',
+    },
+    {
+      label: '跟着学，也合并几箱',
+      key: 'follow',
+      effect: () => { addVal('agency', 1); addOut('money', 2); addOut('risk', 2); },
+      reply: '多记了几箱，工资多了一点。但你心里清楚——这不算数。',
+    },
+    {
+      label: '小声提醒他别这样',
+      key: 'warn',
+      effect: () => { addVal('solidarity', 1); addOut('trust', 1); },
+      reply: '阿强愣了一下，把那箱货放回去了。「谢了，」他小声说，「差点忘了这里有眼睛。」',
+    },
+  ],
+};
+
 function triggerEvent(which) {
   const idata = getIdentityData();
-  // ⚠️ 强制禁用搬运按钮，必须选择才能继续
   const wb = $('workBtn');
   if (wb) { wb.disabled = true; wb.style.opacity = '0.35'; wb.style.cursor = 'not-allowed'; }
 
+  clearInterval(G.timerInterval);
+  G.timerInterval = null;
+
   if (which === 'A') {
     G.eventFired = true;
-    clearInterval(G.timerInterval);
-    G.timerInterval = null;
     showInlineEvent(idata.eventA, 'A');
+  } else if (which === 'C') {
+    G.eventCFired = true;
+    showInlineEvent(EVENT_C, 'C');
   } else {
     G.event2Fired = true;
-    clearInterval(G.timerInterval);
-    G.timerInterval = null;
     const evB = (idata.eventB_condition && idata.eventB_condition())
       ? idata.eventB : idata.eventB_alt;
     showInlineEvent(evB, 'B');
@@ -1066,9 +1325,14 @@ function showInlineEvent(ev, which) {
 
 function resolveEvent(which, key) {
   const idata = getIdentityData();
-  const evKey = which === 'A' ? 'eventA'
-    : ((idata.eventB_condition && idata.eventB_condition()) ? 'eventB' : 'eventB_alt');
-  const ev = idata[evKey];
+  let ev;
+  if (which === 'A') {
+    ev = idata.eventA;
+  } else if (which === 'C') {
+    ev = EVENT_C;
+  } else {
+    ev = (idata.eventB_condition && idata.eventB_condition()) ? idata.eventB : idata.eventB_alt;
+  }
   const opt = ev.opts.find(o => o.key === key);
   if (!opt) return;
 
@@ -1228,6 +1492,13 @@ function closeWageAndNext() {
   if (modal) modal.remove();
   clearInterval(G.timerInterval);
   G.timerInterval = null;
+  // S3→S4 回响：根据本轮搬运表现
+  const boxes = G.boxes;
+  const s3EchoNpc = G.identity === 'manager' ? '小刘' : '阿强';
+  const s3EchoText = boxes >= 40
+    ? `「你那天搬了${boxes}箱，大家都看见了。」`
+    : `「你上次搬了${boxes}箱，哎，新来的正常，慢慢来。」`;
+  G.lastEcho = { npc: s3EchoNpc, text: s3EchoText, actKey: 's3' };
   transition(() => goTo('s4'));
 }
 
@@ -1345,7 +1616,10 @@ function confirmBid() {
 
   // S5招标结果弹窗
   if (r) {
-    showHistoryModal(r.text, r.history, 's6', '进入 1985年 · 工伤保险 →', undefined, undefined, 's5');
+    showHistoryModal(r.text, r.history, 's6', '进入 1985年 · 工伤保险 →', undefined, undefined, 's5',
+      undefined,
+      { npc: '小刘', text: '「招标结果出来了。你做的选择，管委会都知道。」', actKey: 's5' }
+    );
   } else {
     transition(() => goTo('s6'));
   }
@@ -1462,7 +1736,10 @@ function showS7History(replyText) {
   const el2 = $('s7-vote-content');
   if (el2) el2.insertAdjacentHTML('beforeend', `
     <p style="color:rgba(242,232,208,.8);font-size:13px;margin-top:16px;font-style:italic;line-height:1.8">${replyText}</p>`);
-  setTimeout(() => showHistoryModal(replyText, S7_HISTORY_TEXT, 's8', '进入 1988年 · 蛇口风波 →', undefined, undefined, 's7'), 800);
+  setTimeout(() => showHistoryModal(replyText, S7_HISTORY_TEXT, 's8', '进入 1988年 · 蛇口风波 →', undefined, undefined, 's7',
+    undefined,
+    { npc: '阿强', text: '「你那天投票的事，整个工区都传开了。」', actKey: 's7' }
+  ), 800);
 }
 
 function s7VoteChoice(choice, el) {
@@ -1646,8 +1923,15 @@ function makeChoiceVal(screen, choice, el) {
 // 通用历史效应结果展示
 // 历史效应结果：居中弹窗形式（可叉掉）
 function showHistoryResult(screen, result) {
-  // screen参数优先，ttsKey可由result单独指定（如s4b集体谈判路线）
-  showHistoryModal(result.text, result.history, result.next, result.nextLabel, result.videoSrc, result.year, screen || result.screen, result.ttsKey);
+  // 生成幕间回响数据（根据result.next决定下一幕的回响内容）
+  const echoDefaults = {
+    s4: { npc: '陈姐', text: '「合同的事，大家都盯着呢。你那天怎么选的，我知道。」', actKey: 's4' },
+    s5: { npc: '阿强', text: '「招标结果出来了——选的那家，干得怎么样大家都看着。」', actKey: 's5' },
+    s6: { npc: '老赵', text: '「王福的事，工区里传开了。你那天怎么做的，我们都记着。」', actKey: 's6' },
+    s7: { npc: '阿强', text: '「你那天投票的事，整个工区都传开了。」', actKey: 's7' },
+  };
+  const echoData = result.echo || echoDefaults[screen] || null;
+  showHistoryModal(result.text, result.history, result.next, result.nextLabel, result.videoSrc, result.year, screen || result.screen, result.ttsKey, echoData);
 }
 
 // 视频素材映射（有了就用，没有就显示纯色背景）
@@ -1661,7 +1945,7 @@ const SCENE_VIDEOS = {
   's8': 'assets/scenes/s8_1988_礼堂辩论_有声.mp4',
 };
 
-function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen, ttsKeyOverride) {
+function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen, ttsKeyOverride, echoData) {
   const old = document.getElementById('historyModal');
   if (old) old.remove();
   // 停止上一个弹窗的旁白音频
@@ -1708,7 +1992,7 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
       <div class="hm-footer">
         <button class="hm-close" onclick="Audio.stopSpeak();SFX.stopTypewriter();const t=document.getElementById('ttsPlayer');if(t){t.pause();t.remove();}document.getElementById('historyModal').remove()" title="关闭，停留在当前页">✕</button>
         <button class="hm-next" id="historyNextBtn"
-          onclick="Audio.stopSpeak();SFX.stopTypewriter();const tp=document.getElementById('ttsPlayer');if(tp){tp.pause();tp.remove();}document.getElementById('historyModal').remove();transition(()=>goTo('${nextScreen}'))"
+          onclick="Audio.stopSpeak();SFX.stopTypewriter();const tp=document.getElementById('ttsPlayer');if(tp){tp.pause();tp.remove();}document.getElementById('historyModal').remove();if(window._nextEcho){G.lastEcho=window._nextEcho;window._nextEcho=null;}transition(()=>goTo('${nextScreen}'))"
           disabled>${nextLabel} (3)</button>
       </div>
     </div>`;
@@ -1728,6 +2012,9 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
   // 打字机效果
   const narEl = document.getElementById('hmNarrative');
   if (narEl) { SFX.typewriter(); typewriterHTML(narEl, text, 18); }
+
+  // 存储下一幕回响数据（在「下一幕」按钮点击时写入G.lastEcho）
+  window._nextEcho = echoData || null;
 
   // TTS音频播放（用currentScreen幕次对应的mp3，可被ttsKeyOverride覆盖）
   const ttsKey = ttsKeyOverride || currentScreen;
@@ -2052,18 +2339,20 @@ function skipIntro() {
   const overlay = document.getElementById('introOverlay');
   if (overlay) {
     overlay.style.opacity = '0';
-    setTimeout(() => { overlay.remove(); transition(() => goTo('s1')); }, 600);
+    setTimeout(() => { overlay.remove(); transition(() => goTo('p0')); }, 600);
   } else {
-    transition(() => goTo('s1'));
+    transition(() => goTo('p0'));
   }
 }
 
 function restart() {
   G.identity = null; G.boxes = 0; G.wage = 0; G.bonusBoxes = 0;
-  G.stamina = 5; G.timerSec = 540; G.gameOver = false;
-  G.eventFired = false; G.event2Fired = false; G.milestoneShown = false;
+  G.stamina = 5; G.timerSec = 210; G.gameOver = false;
+  G.eventFired = false; G.event2Fired = false; G.eventCFired = false; G.milestoneShown = false;
   G.choices = {}; G.archivesUnlocked = new Set(['slogan']);
   G.values = { reform: 0, solidarity: 0, agency: 0 };
+  G.outcomes = { money: 0, trust: 0, risk: 0 };
+  G.lastEcho = null;
   NPC_LINES.splice(0, NPC_LINES.length,
     '快点！这批货赶着出口，超额完成今天的指标能多拿奖金！',
     '加油加油！你已经超过今天目标一半了！',
@@ -2089,5 +2378,5 @@ function restart() {
   if (mm) mm.remove();
   const hm = document.getElementById('historyModal');
   if (hm) hm.remove();
-  transition(() => goTo('s1'));
+  transition(() => goTo('p0'));
 }
