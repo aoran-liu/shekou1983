@@ -568,20 +568,158 @@ function chooseOrigin(key) {
 
   // 禁用所有卡片，选中高亮
   document.querySelectorAll('.p0-card').forEach(c => c.style.pointerEvents = 'none');
-  const cards = document.querySelectorAll('.p0-card');
-  [...cards].forEach((c, i) => {
+  [...document.querySelectorAll('.p0-card')].forEach((c, i) => {
     if (P0_OPTIONS[i].key === key) c.classList.add('selected');
     else c.style.opacity = '0.4';
   });
 
   SFX.stamp();
-  opt.effect();  // 施加初始价值效果
+  opt.effect();
   G.archivesUnlocked.add('ARC_P0_TICKET');
-
-  // 设置S2的回响（P0→S2）
   G.lastEcho = { ...opt.echo, actKey: 'p0' };
 
-  setTimeout(() => transition(() => goTo('s2')), 600);
+  // 延迟200ms后弹出角色介绍卡片
+  setTimeout(() => showCharacterCard(opt), 200);
+}
+
+// ── 角色介绍卡片（P0选完后展示）──────────────────
+const CHARACTER_DATA = {
+  worker: {
+    name: '张建国',
+    role: '码头装卸工',
+    year: '1955年生，广东惠州人',
+    avatarColor: '#3a6ea5',
+    avatarLetter: '张',
+    quote: '「家里还有债，蛇口听说工钱比别处高。先把钱挣了，再说其他的。」',
+    mainline: '主线：安家攒钱',
+    dilemma: '困境：在多变规则中寻求稳态',
+    tone: '基调：质朴、焦虑、务实',
+    opening: '你是第一批来到蛇口的外省工人之一。行李只有一个蛇皮袋，揣着家里的嘱托。',
+  },
+  manager: {
+    name: '陈志远',
+    role: '劳资处干部',
+    year: '1950年生，北京人，下派试点',
+    avatarColor: '#8b3a3a',
+    avatarLetter: '陈',
+    quote: '「上面让我来这里试验一套新制度。我不知道对不对，但我知道——得有人去做。」',
+    mainline: '主线：良心试验',
+    dilemma: '困境：执行力与人性化的拉扯',
+    tone: '基调：冷静、内省、背负感',
+    opening: '你是省里下派的干部，负责在蛇口试行劳动合同制度。一套从没人做过的事。',
+  },
+  woman: {
+    name: '林阿芳',
+    role: '凯达厂女工',
+    year: '1960年生，广东梅州人',
+    avatarColor: '#5a8a5a',
+    avatarLetter: '芳',
+    quote: '「跟着老乡来的，大家互相照应。在这里，一个人撑不住的。」',
+    mainline: '主线：身体权利',
+    dilemma: '困境：制度扩张下的隐形牺牲',
+    tone: '基调：谨慎、坚韧、隐忍',
+    opening: '你跟着梅州老乡一起来的。工厂宿舍里六个女工挤一间，你们互相守望。',
+  },
+  elder: {
+    name: '老赵',
+    role: '老工人',
+    year: '1940年生，东北人，调防南下',
+    avatarColor: '#7a6a4a',
+    avatarLetter: '赵',
+    quote: '「又换地方了。反正走到哪里都是干活，我无所谓。」',
+    mainline: '主线：再造价值',
+    dilemma: '困境：旧经验在效率时代的贬值',
+    tone: '基调：沧桑、尊严、固执',
+    opening: '你是被单位调防来的。二十年的工龄，在这片陌生的南方海边，好像突然不值钱了。',
+  },
+};
+
+function showCharacterCard(opt) {
+  const data = CHARACTER_DATA[opt.key] || {};
+  const card = document.createElement('div');
+  card.id = 'charCard';
+  card.style.cssText = `
+    position:fixed;inset:0;z-index:8000;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(4,10,22,.85);backdrop-filter:blur(12px);
+    animation:fadeIn .4s ease;
+  `;
+  card.innerHTML = `
+    <div style="
+      max-width:520px;width:92%;
+      background:rgba(8,18,40,.97);
+      border:1px solid rgba(200,150,42,.3);
+      padding:0;overflow:hidden;
+      box-shadow:0 0 60px rgba(200,150,42,.12),0 40px 80px rgba(0,0,0,.8);
+      animation:slideUp .4s ease;
+    ">
+      <!-- 头部：头像 + 名字 -->
+      <div style="display:flex;align-items:center;gap:20px;padding:28px 32px 20px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <div style="
+          width:72px;height:72px;border-radius:50%;flex-shrink:0;
+          background:${data.avatarColor || '#333'};
+          display:flex;align-items:center;justify-content:center;
+          font-size:28px;font-weight:900;color:rgba(255,255,255,.9);
+          border:2px solid rgba(200,150,42,.3);
+          position:relative;overflow:hidden;
+        ">
+          <img src="assets/characters/${opt.key}.jpg" 
+               style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"
+               onerror="this.style.display='none'">
+          <span style="position:relative;z-index:1">${data.avatarLetter}</span>
+        </div>
+        <div>
+          <div style="font-size:24px;font-weight:900;color:rgba(242,232,208,.95);letter-spacing:2px">${data.name}</div>
+          <div style="font-size:11px;color:rgba(200,150,42,.8);letter-spacing:3px;margin-top:4px">${data.role}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.35);letter-spacing:1px;margin-top:3px">${data.year}</div>
+        </div>
+      </div>
+      <!-- 开场白 -->
+      <div style="padding:20px 32px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <p style="font-size:13px;color:rgba(242,232,208,.7);line-height:1.9;margin:0">${data.opening}</p>
+      </div>
+      <!-- 引用台词 -->
+      <div style="padding:16px 32px;border-bottom:1px solid rgba(255,255,255,.06);">
+        <p style="
+          font-size:14px;color:rgba(242,232,208,.88);line-height:1.85;
+          font-style:italic;margin:0;
+          border-left:2px solid rgba(200,150,42,.5);padding-left:14px;
+        ">${data.quote}</p>
+      </div>
+      <!-- 角色属性标签 -->
+      <div style="padding:14px 32px 20px;display:flex;flex-wrap:wrap;gap:8px;">
+        ${[data.mainline, data.dilemma, data.tone].map(t => `
+          <span style="
+            font-size:10px;color:rgba(200,150,42,.7);
+            border:1px solid rgba(200,150,42,.2);
+            padding:4px 10px;letter-spacing:1px;
+          ">${t}</span>`).join('')}
+      </div>
+      <!-- 按钮 -->
+      <div style="padding:0 32px 28px;">
+        <button onclick="document.getElementById('charCard').remove();transition(()=>goTo('s2'))" style="
+          width:100%;padding:14px;
+          background:rgba(200,150,42,.12);
+          border:1px solid rgba(200,150,42,.4);
+          color:rgba(200,150,42,.9);
+          cursor:pointer;font-size:12px;letter-spacing:3px;
+          font-family:inherit;transition:all .2s;
+        " onmouseover="this.style.background='rgba(200,150,42,.22)'"
+           onmouseout="this.style.background='rgba(200,150,42,.12)'">
+          开始 ${data.name} 的 1979 →
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(card);
+
+  // Enter/Space也能关闭
+  const handler = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      card.remove(); transition(() => goTo('s2'));
+      document.removeEventListener('keydown', handler);
+    }
+  };
+  document.addEventListener('keydown', handler);
 }
 
 // ══════════════════════════════════════════
@@ -2367,16 +2505,16 @@ function restart() {
     c.style.pointerEvents = '';
     c.classList.remove('selected');
   });
-  // 清除各幕历史结果块（防止重玩时残留）
+    // 清除各幕历史结果块（防止重玩时残留）
   document.querySelectorAll('.history-result').forEach(el => el.remove());
-  // 清除s2选择注入标记
-  const s2c = document.getElementById('s2-choices');
-  if (s2c) { s2c.innerHTML = ''; delete s2c.dataset.injected; }
-  const wm = document.getElementById('wageModal');
-  if (wm) wm.remove();
-  const mm = document.getElementById('milestoneModal');
-  if (mm) mm.remove();
-  const hm = document.getElementById('historyModal');
-  if (hm) hm.remove();
+  // 清除注入标记（p0/s2/s7 用了 dataset.injected）
+  [['p0-choices', true], ['s2-choices', true], ['s7-vote-content', true]].forEach(([id, clearContent]) => {
+    const el = document.getElementById(id);
+    if (el) { if (clearContent) el.innerHTML = ''; delete el.dataset.injected; }
+  });
+  // 清除弹窗残留
+  ['wageModal','milestoneModal','historyModal','echoCard'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.remove();
+  });
   transition(() => goTo('p0'));
 }

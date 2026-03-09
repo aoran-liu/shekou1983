@@ -128,7 +128,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 
 /* 通用叙事页 */
 .act-content{position:relative;z-index:2;width:100%;max-width:680px;
-  margin:0 auto;padding:60px 0;display:flex;flex-direction:column;gap:20px;
+  margin:0 auto;padding:calc(38px + 24px) 0 60px;display:flex;flex-direction:column;gap:20px;
   overflow-y:auto;max-height:100vh}
 .act-content-wide{max-width:920px}
 .act-header{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
@@ -379,9 +379,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 .bfc.voted{color:var(--red);font-weight:700}
 
 /* 结算报告 */
-#s9{align-items:center;justify-content:center;overflow:hidden}
+#s9{align-items:center;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;padding:60px 20px 40px}
 .report-card{background:rgba(4,10,22,.97);border:1px solid rgba(200,150,42,.18);
-  padding:50px 62px;width:580px;position:relative;z-index:2;
+  padding:50px 62px;width:580px;max-width:100%;position:relative;z-index:2;
+  margin:0 auto;
   box-shadow:0 0 100px rgba(200,150,42,.07),0 60px 120px rgba(0,0,0,.85);
   transform:translateY(40px);opacity:0;transition:all .8s cubic-bezier(.25,.8,.25,1)}
 #s9.visible .report-card{transform:translateY(0);opacity:1}
@@ -1007,9 +1008,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 .topbar-item.val-sol b     { color: var(--gold); }
 .topbar-item.val-agency b  { color: #7eb3e8; }
 
-/* ── 顶部栏存在时，其他内容下移 ── */
-.screen { padding-top: 38px; }
-#s0, #p0 { padding-top: 0; }   /* 开场和序章不需要偏移 */
+/* ── 顶部栏存在时，内容区域下移 ── */
+/* act-content / s1-wrap 加 padding-top，不动 .screen 本身 */
+.s1-wrap { padding-top: calc(38px + 20px) !important; }
+#s3 .panel { padding-top: calc(38px + 8px); }
+/* P0 序章：内容容器让出顶部栏空间 */
+#p0 > div:last-child { padding-top: calc(38px + 24px); }
+/* S9 结算已有 padding-top:60px，无需额外处理 */
 
 /* ══════════════════════════════════════════
    P0 序章 · 选择卡片
