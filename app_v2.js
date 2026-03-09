@@ -1413,22 +1413,8 @@ function voteFor(candidate, el) {
 // S8: 幕七·1988·蛇口风波（结局分叉）
 // ══════════════════════════════════════════
 function injectS8() {
-  const idata = getIdentityData();
-  const tag     = $('s8-tag');
-  const title   = $('s8-title');
-  const body    = $('s8-body');
-  const quote   = $('s8-afang-quote');
-  const choices = $('s8-choices');
-  if (tag)   tag.textContent   = idata.s8Tag;
-  if (title) title.textContent = idata.s8Title;
-  if (body)  body.innerHTML    = idata.s8Body;
-  if (quote) quote.textContent = idata.s8AfangQuote;
-  if (choices) {
-    choices.innerHTML = idata.s8Choices.map(c => `
-      <button class="choice-btn" onclick="finalChoice('${c.key}',this)">
-        ${c.label}<small>${c.sub}</small>
-      </button>`).join('');
-  }
+  // S8内容已在HTML静态写好，无需JS注入
+  // choices也已静态写好（clap/silent/doubt），直接使用
 }
 
 function finalChoice(key, el) {
