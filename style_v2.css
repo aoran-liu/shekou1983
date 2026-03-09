@@ -764,3 +764,158 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 }
 #audioBar button:hover { color: var(--gold); }
 #bgmLabel { font-size: 9px; color: rgba(242,232,208,.3); min-width: 80px; }
+
+/* ══════════════════════════════════════════
+   移动端适配 (≤768px)  v3
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* ── 通用 ── */
+  body { font-size: 14px; }
+
+  /* ── S3 码头搬运：竖排布局 ── */
+  #s3 { flex-direction: column; overflow-y: auto; }
+
+  .panel {
+    width: 100%;
+    height: auto;
+    max-height: 55vh;
+    border-left: none;
+    border-top: 1px solid rgba(200,150,42,.15);
+    flex-shrink: 0;
+  }
+  .panel-scroll { max-height: calc(55vh - 100px); }
+
+  /* 左侧场景区缩小 */
+  #s3 > div:first-child { min-height: 40vh; flex: 0 0 40vh; }
+
+  /* NPC立绘在手机上隐藏（太挤） */
+  .npc-portrait { display: none !important; }
+
+  /* 搬运按钮更大，手指好点 */
+  #workBtn {
+    font-size: 15px;
+    padding: 16px 24px;
+    min-height: 56px;
+  }
+
+  /* ── 幕次内容区 ── */
+  .act-content {
+    max-width: 100%;
+    padding: 20px 16px;
+  }
+  .act-content-wide { max-width: 100%; }
+
+  .act-year { font-size: clamp(48px, 15vw, 96px); }
+  .act-slash { font-size: clamp(28px, 8vw, 48px); }
+  .act-name { font-size: clamp(13px, 3.5vw, 18px); }
+
+  /* ── 选项按钮：手机上单列 ── */
+  .choice-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .choice-btn {
+    padding: 14px 12px;
+    font-size: 13px;
+  }
+
+  /* ── 历史效应弹窗 ── */
+  .history-modal-v2 {
+    padding: 12px;
+    align-items: flex-end; /* 从底部弹出，更符合手机习惯 */
+  }
+  .hm-card {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+    overflow-y: auto;
+  }
+  .hm-video-wrap {
+    height: 160px; /* PC上更高，手机缩小 */
+  }
+  .hm-body {
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  .hm-narrative { font-size: 13px; }
+  .hm-history-text { font-size: 11px; }
+  .hm-footer {
+    padding: 10px 16px 20px; /* 底部多留空间，避免被Home bar遮挡 */
+    gap: 8px;
+    flex-direction: column;
+  }
+  .hm-next {
+    width: 100%;
+    padding: 14px;
+    font-size: 12px;
+  }
+  .hm-close {
+    align-self: flex-end;
+    order: -1; /* 关闭按钮移到顶部 */
+  }
+
+  /* ── 结算报告 ── */
+  .report-wrap { padding: 16px 12px; }
+  .rpt-identity { font-size: 36px; }
+  .rpt-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .rg-val { font-size: 20px; }
+  .rpt-btns { grid-template-columns: 1fr; }
+  .rpt-btn { padding: 14px; font-size: 11px; }
+
+  /* ── 全局退出按钮 ── */
+  #globalExit {
+    top: 12px; right: 12px;
+    padding: 6px 12px;
+    font-size: 10px;
+  }
+
+  /* ── 底部音频栏 ── */
+  #audioBar {
+    bottom: 10px; right: 10px;
+    font-size: 9px;
+    padding: 5px 10px;
+  }
+
+  /* ── S1 身份选择卡片 ── */
+  .id-card-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 12px;
+  }
+  .id-card-choice { padding: 16px 10px; }
+
+  /* ── S9 档案馆 ── */
+  .archive-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* ── 开场文字 ── */
+  #introLine {
+    font-size: 14px !important;
+    padding: 0 20px !important;
+    min-height: 80px !important;
+  }
+}
+
+/* ── 超小屏（≤390px，iPhone SE等）── */
+@media (max-width: 390px) {
+  .act-year { font-size: 44px; }
+  .hm-video-wrap { height: 120px; }
+  .id-card-grid { grid-template-columns: 1fr; }
+  .rpt-grid { grid-template-columns: 1fr; }
+}
+
+/* ── 横屏手机 ── */
+@media (max-width: 768px) and (orientation: landscape) {
+  .hm-card { max-height: 96vh; }
+  .hm-video-wrap { height: 100px; }
+  .panel { max-height: 70vh; }
+  #s3 > div:first-child { min-height: 30vh; flex: 0 0 30vh; }
+}
