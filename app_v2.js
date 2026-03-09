@@ -1562,6 +1562,7 @@ function makeChoiceVal(screen, choice, el) {
     },
     collective: {
       val: () => { addVal('solidarity', 2); G.archivesUnlocked.add('contract_negotiated'); },
+      ttsKey: 's4b',
       text: `你和七个工友联名，要求将合同期从一年延长为两年。<br><br>
         劳资处沉默了三天。<br>
         第四天，通知下来了：<br>
@@ -1636,8 +1637,8 @@ function makeChoiceVal(screen, choice, el) {
 // 通用历史效应结果展示
 // 历史效应结果：居中弹窗形式（可叉掉）
 function showHistoryResult(screen, result) {
-  // screen参数优先，其次result.screen
-  showHistoryModal(result.text, result.history, result.next, result.nextLabel, result.videoSrc, result.year, screen || result.screen);
+  // screen参数优先，ttsKey可由result单独指定（如s4b集体谈判路线）
+  showHistoryModal(result.text, result.history, result.next, result.nextLabel, result.videoSrc, result.year, screen || result.screen, result.ttsKey);
 }
 
 // 视频素材映射（有了就用，没有就显示纯色背景）
@@ -1651,7 +1652,7 @@ const SCENE_VIDEOS = {
   's8': 'assets/scenes/s8_1988_礼堂辩论_有声.mp4',
 };
 
-function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen) {
+function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen, ttsKeyOverride) {
   const old = document.getElementById('historyModal');
   if (old) old.remove();
   // 停止上一个弹窗的旁白音频
@@ -1719,17 +1720,17 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
   const narEl = document.getElementById('hmNarrative');
   if (narEl) { SFX.typewriter(); typewriterHTML(narEl, text, 18); }
 
-  // TTS音频播放（用currentScreen幕次对应的mp3）
-  const ttsKey = currentScreen;  // 严格用当前幕，不fallback
-  // 文件编号与幕次的实际对应（1.MP3=S2旁白，以此类推）
+  // TTS音频播放（用currentScreen幕次对应的mp3，可被ttsKeyOverride覆盖）
+  const ttsKey = ttsKeyOverride || currentScreen;
   const ttsMap = {
-    's2':'assets/narration/s2_1979_炸山_旁白.mp3',
-    's3':'assets/narration/s3_1981_计件_旁白.mp3',
-    's4':'assets/narration/s4_1983_合同_旁白.mp3',
-    's5':'assets/narration/s5_1984_招标_旁白.mp3',
-    's6':'assets/narration/s6_1985_保险_旁白.mp3',
-    's7':'assets/narration/s7_1986_选举_旁白.mp3',
-    's8':'assets/narration/s8_1988_风波_旁白.mp3',
+    's2' :'assets/narration/s2_1979_炸山_旁白.mp3',
+    's3' :'assets/narration/s3_1981_计件_旁白.mp3',
+    's4' :'assets/narration/s4_1983_合同_旁白.mp3',
+    's4b':'assets/narration/s4b_1983_合同谈判_旁白.mp3',
+    's5' :'assets/narration/s5_1984_招标_旁白.mp3',
+    's6' :'assets/narration/s6_1985_保险_旁白.mp3',
+    's7' :'assets/narration/s7_1986_选举_旁白.mp3',
+    's8' :'assets/narration/s8_1988_风波_旁白.mp3',
   };
   if (ttsMap[ttsKey]) {
     const ttsAudio = new window.Audio(ttsMap[ttsKey]);
