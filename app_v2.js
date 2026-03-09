@@ -258,6 +258,11 @@ if (cursor) {
 
 // ── 屏幕切换 ──────────────────────────────
 function goTo(id) {
+  // 切幕时停止旁白音频（防止上一幕音频流入下一幕）
+  const oldTts = document.getElementById('ttsPlayer');
+  if (oldTts) { oldTts.pause(); oldTts.remove(); }
+  Audio.stopSpeak();
+
   // BGM切换（暂时关闭）
   // Audio.forScreen(id);
 
@@ -1571,6 +1576,10 @@ const SCENE_VIDEOS = {
 function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen) {
   const old = document.getElementById('historyModal');
   if (old) old.remove();
+  // 停止上一个弹窗的旁白音频
+  const oldTts = document.getElementById('ttsPlayer');
+  if (oldTts) { oldTts.pause(); oldTts.remove(); }
+  Audio.stopSpeak();
 
   const vid = videoSrc || SCENE_VIDEOS[currentScreen] || null;  // 只用currentScreen，不fallback到nextScreen
   // 有声音的视频列表（保留原声，不muted）
