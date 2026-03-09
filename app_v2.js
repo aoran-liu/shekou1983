@@ -193,6 +193,7 @@ const SFX = (() => {
   }
 
   return {
+    click:     () => playOnce('click.mp3', 0.7),
     boxDrop:   () => playOnce('box-drop.mp3', 0.55),
     coin:      () => playOnce('coin.mp3', 0.8),
     complete:  () => playOnce('complete.mp3', 0.7),
@@ -389,6 +390,14 @@ function transition(fn) {
 
 // ── 开场 ──────────────────────────────────
 window.addEventListener('load', () => {
+  // ── 全局按钮点击音效（排除搬运按钮和S3场景区点击）──
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('button, .id-card-choice, .choice-btn, .hm-close, .hm-next, .rpt-btn, .arc-item');
+    if (!btn) return;
+    if (btn.id === 'workBtn') return;       // 搬运按钮有自己的音效
+    if (btn.closest('#audioBar')) return;   // 音频控制栏不触发
+    SFX.click();
+  }, true); // capture phase，确保最先触发
   const s0 = $('s0');
   s0.classList.add('active');
   const vid = $('s0Video');
