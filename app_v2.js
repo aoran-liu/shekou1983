@@ -576,7 +576,7 @@ function chooseOrigin(key) {
 
   SFX.stamp();
   opt.effect();  // 施加初始价值效果
-  unlockArchive('ARC_P0_TICKET');
+  G.archivesUnlocked.add('ARC_P0_TICKET');
 
   // 设置S2的回响（P0→S2）
   G.lastEcho = { ...opt.echo, actKey: 'p0' };
