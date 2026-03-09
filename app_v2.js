@@ -1862,7 +1862,7 @@ function playIntroScene() {
   `;
 
   overlay.innerHTML = `
-    <video id="introVid" src="assets/raw/原始_开场视频_3月7日.mp4" muted playsinline
+    <video id="introVid" src="assets/intro.mp4" muted playsinline
       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55"></video>
     <div style="position:relative;z-index:2;max-width:720px;padding:0 40px;text-align:center">
       <p id="introLine" style="
