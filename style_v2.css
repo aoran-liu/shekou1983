@@ -366,6 +366,66 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 .ic-label{font-size:10px;color:var(--red);letter-spacing:3px;margin-bottom:8px}
 .ic-content{font-size:14px;color:rgba(242,232,208,.8);line-height:1.9}
 
+/* S6/S7 多步翻页布局 */
+.step-screen {
+  /* 覆盖 act-content 的 overflow，让 step-panel 自己管 */
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+.step-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  animation: s6PanelIn .35s ease;
+}
+.step-body {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 12px;
+}
+.step-body::-webkit-scrollbar { width: 3px; }
+.step-body::-webkit-scrollbar-thumb { background: rgba(200,150,42,.3); border-radius:2px; }
+.step-footer {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.06);
+  margin-top: 8px;
+}
+.step-footer .s6-next-btn,
+.step-footer .s6-back-btn {
+  margin-top: 0; /* 覆盖原来的 margin-top:20px */
+}
+
+/* S6/S7 步骤按钮 */
+.s6-steps{display:flex;gap:8px;margin-bottom:20px;align-items:center}
+.s6-step{
+  width:24px;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.15);
+  transition:all .3s;
+}
+.s6-step.active{background:var(--gold);width:36px}
+.s6-step.done{background:rgba(200,150,42,.4)}
+.s6-panel{animation:s6PanelIn .35s ease}
+@keyframes s6PanelIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+.s6-next-btn{
+  flex:1;margin-top:20px;padding:12px;
+  background:var(--red);border:none;
+  color:white;font-size:11px;letter-spacing:3px;
+  cursor:pointer;font-family:inherit;transition:opacity .2s;
+}
+.s6-next-btn:hover{opacity:.85}
+.s6-back-btn{
+  flex:0 0 80px;margin-top:20px;padding:12px;
+  background:transparent;border:1px solid rgba(255,255,255,.2);
+  color:rgba(255,255,255,.45);font-size:11px;letter-spacing:2px;
+  cursor:pointer;font-family:inherit;transition:all .2s;
+}
+.s6-back-btn:hover{border-color:rgba(255,255,255,.4);color:rgba(255,255,255,.7)}
+
 /* 选票 */
 .ballot-card{background:var(--paper);padding:28px;max-width:400px;
   box-shadow:0 20px 60px rgba(0,0,0,.6)}
@@ -379,7 +439,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
 .bfc.voted{color:var(--red);font-weight:700}
 
 /* 结算报告 */
-#s9{align-items:center;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;padding:60px 20px 40px}
+#s9{display:none;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;overflow-x:hidden;padding:60px 20px 40px}
+#s9.active{display:flex !important}
 .report-card{background:rgba(4,10,22,.97);border:1px solid rgba(200,150,42,.18);
   padding:50px 62px;width:580px;max-width:100%;position:relative;z-index:2;
   margin:0 auto;
@@ -589,9 +650,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   border:1px solid rgba(200,150,42,.3);
   border-left:3px solid var(--gold);
   padding:0;
-  max-width:620px;width:92%;
-  max-height:82vh;
-  display:flex;flex-direction:column;
+  /* 左右分栏：宽度扩大到900px */
+  max-width:900px;width:94%;
+  max-height:86vh;
+  display:flex;flex-direction:row;  /* ← 改为横向 */
   overflow:hidden;
   box-shadow:0 0 100px rgba(200,150,42,.08),0 40px 80px rgba(0,0,0,.6);
   animation:cardSlideIn .5s cubic-bezier(.22,.61,.36,1);
@@ -601,30 +663,34 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   to{opacity:1;transform:translateY(0) scale(1)}
 }
 
-/* 视频区域 */
+/* 左侧：视频区域（固定宽度） */
 .hm-video-wrap{
-  width:100%;height:200px;flex-shrink:0;
+  width:340px;flex-shrink:0;
   position:relative;overflow:hidden;
   background:#000;
+  display:flex;flex-direction:column;
 }
 .hm-video-wrap video{
-  width:100%;height:100%;object-fit:cover;opacity:.7;
+  width:100%;height:100%;object-fit:cover;opacity:.8;
+  flex:1;
 }
 .hm-video-overlay{
   position:absolute;inset:0;
-  background:linear-gradient(to bottom,transparent 40%,rgba(6,14,30,.95) 100%);
+  background:linear-gradient(to right,transparent 60%,rgba(6,14,30,.85) 100%);
+  pointer-events:none;
 }
 .hm-video-year{
-  position:absolute;bottom:16px;left:24px;
-  font-size:48px;color:rgba(255,255,255,.08);
+  position:absolute;bottom:24px;left:20px;
+  font-size:52px;color:rgba(255,255,255,.12);
   font-family:'Courier New',monospace;letter-spacing:4px;
-  font-weight:900;
+  font-weight:900;line-height:1;
 }
 
-/* 文字区域 */
+/* 右侧：内容区域 */
 .hm-body{
   flex:1;overflow-y:auto;
-  padding:28px 32px 0;
+  padding:32px 32px 0;
+  display:flex;flex-direction:column;
 }
 .hm-narrative{
   font-size:13.5px;color:rgba(242,232,208,.88);
@@ -651,12 +717,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   line-height:2;margin-bottom:24px;
 }
 
-/* 底部按钮区 */
+/* 底部按钮区（在右侧底部） */
 .hm-footer{
   padding:16px 32px 24px;
   display:flex;gap:10px;align-items:center;
   border-top:1px solid rgba(255,255,255,.05);
   flex-shrink:0;
+  margin-top:auto;
 }
 .hm-close{
   width:36px;height:36px;
@@ -857,20 +924,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
     font-size: 13px;
   }
 
-  /* ── 历史效应弹窗 ── */
+  /* ── 历史效应弹窗（移动端退回上下布局） ── */
   .history-modal-v2 {
     padding: 12px;
-    align-items: flex-end; /* 从底部弹出，更符合手机习惯 */
+    align-items: flex-end;
   }
   .hm-card {
     width: 100%;
     max-width: 100%;
     max-height: 92vh;
     border-radius: 16px 16px 0 0;
+    flex-direction: column; /* 手机上改回纵向 */
     overflow-y: auto;
   }
   .hm-video-wrap {
-    height: 160px; /* PC上更高，手机缩小 */
+    width: 100%;
+    height: 160px;
+    flex-shrink: 0;
   }
   .hm-body {
     padding: 16px;
@@ -880,7 +950,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   .hm-narrative { font-size: 13px; }
   .hm-history-text { font-size: 11px; }
   .hm-footer {
-    padding: 10px 16px 20px; /* 底部多留空间，避免被Home bar遮挡 */
+    padding: 10px 16px 20px;
     gap: 8px;
     flex-direction: column;
   }
@@ -891,7 +961,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000;
   }
   .hm-close {
     align-self: flex-end;
-    order: -1; /* 关闭按钮移到顶部 */
+    order: -1;
   }
 
   /* ── 结算报告 ── */

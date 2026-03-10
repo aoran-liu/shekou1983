@@ -355,63 +355,111 @@
 
 <!-- ========== S6: 幕五·1985·保险 ========== -->
 <section class="screen" id="s6">
-  <video class="screen-video" src="assets/s5-accident.mp4" muted loop playsinline></video>
   <div class="bg-img" style="background-image:url('assets/bg-accident.jpg');filter:sepia(50%) brightness(.25)"></div>
   <div class="dark-overlay" style="background:rgba(0,0,0,0.6)"></div>
-  <div class="act-content">
+  <div class="act-content step-screen">
     <div class="act-header">
       <span class="act-year">1985</span>
       <span class="act-slash">/</span>
-      <span class="act-name">王福的事故</span>
+      <span class="act-name" id="s6-subtitle">王福的事故</span>
     </div>
-    <div class="act-story">
-      <p>工友王福从集装箱上摔下来了。</p>
-      <p>救护车赶来，但医院要先付钱。<br>
-      王福没有参加蛇口今年新推行的<strong>社会保险制度</strong>——<br>
-      他觉得每月扣钱没必要，这辈子没出过事。</p>
-      <div class="injury-card">
-        <div class="ic-label">王福 · 诊断书</div>
-        <div class="ic-content">右腿骨折，需住院治疗 14天<br>
-        预计费用：<strong>¥ 380元</strong><br>
-        社保报销：<span class="red">¥ 0（未参保）</span></div>
+
+    <!-- 步骤指示器 -->
+    <div class="s6-steps">
+      <span class="s6-step active" id="s6-dot-1"></span>
+      <span class="s6-step" id="s6-dot-2"></span>
+      <span class="s6-step" id="s6-dot-3"></span>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="s6-panel step-panel" id="s6-p1">
+      <div class="step-body">
+        <p style="font-size:18px;font-weight:700;color:var(--white);line-height:1.6">工友王福从集装箱上摔下来了。</p>
+        <p style="margin-top:16px">救护车赶来，但医院要先付钱。</p>
+        <p>他没有买保险。每月4块钱，他觉得没必要。<br>他说，这辈子没出过事。</p>
       </div>
-      <p>大家开始凑钱。但凑够了又能怎样——<br>
-      这一次之后，还会有下一次。</p>
-      <div class="quote-box">
-        <div class="qb-speaker">阿芳</div>
-        <div class="qb-text">「内地的工厂，出了事连凑钱的人都没有。<br>
-        但我们这里好歹有保险制度——可惜王福没买。」</div>
+      <div class="step-footer">
+        <button class="s6-next-btn" onclick="s6GoStep(2)">继续 →</button>
       </div>
     </div>
-    <!-- solidarity>=2 时额外事件注入区 -->
-    <div id="s6-solidarity-event" style="display:none"></div>
-    <div class="choice-row">
-      <button class="choice-btn" onclick="makeChoiceVal('s6','help',this)">💰 参与凑钱<br><small>帮王福渡过难关</small></button>
-      <button class="choice-btn" onclick="makeChoiceVal('s6','insurance',this)">📋 推动全员参保<br><small>从制度上解决问题</small></button>
+
+    <!-- Step 2 -->
+    <div class="s6-panel step-panel" id="s6-p2" style="display:none">
+      <div class="step-body">
+        <div class="injury-card">
+          <div class="ic-label">王福 · 诊断书</div>
+          <div class="ic-content">右腿骨折，需住院治疗 14天<br>
+          预计费用：<strong>¥ 380元</strong><br>
+          社保报销：<span class="red">¥ 0（未参保）</span></div>
+        </div>
+        <p style="margin-top:16px">大家开始凑钱。但凑够了又能怎样——<br>这一次之后，还会有下一次。</p>
+        <div class="quote-box">
+          <div class="qb-speaker">阿芳</div>
+          <div class="qb-text">「内地的工厂，出了事连凑钱的人都没有。<br>但我们这里好歹有保险制度——可惜王福没买。」</div>
+        </div>
+      </div>
+      <div class="step-footer">
+        <button class="s6-back-btn" onclick="s6GoStep(1)">← 返回</button>
+        <button class="s6-next-btn" onclick="s6GoStep(3)">继续 →</button>
+      </div>
     </div>
+
+    <!-- Step 3 -->
+    <div class="s6-panel step-panel" id="s6-p3" style="display:none">
+      <div class="step-body">
+        <div id="s6-solidarity-event"></div>
+        <div class="choice-row" id="s6-default-choices">
+          <button class="choice-btn" onclick="makeChoiceVal('s6','help',this)">💰 参与凑钱<br><small>帮王福渡过难关</small></button>
+          <button class="choice-btn" onclick="makeChoiceVal('s6','insurance',this)">📋 推动全员参保<br><small>从制度上解决问题</small></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
   </div>
 </section>
 
 <!-- ========== S7: 幕六·1986·选举 ========== -->
 <section class="screen" id="s7">
-  <video class="screen-video" src="assets/s6-vote.mp4" muted loop playsinline></video>
   <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(60%) brightness(.18)"></div>
   <div class="dark-overlay" style="background:rgba(0,0,0,0.6)"></div>
-  <div class="act-content">
+  <div class="act-content step-screen">
     <div class="act-header">
       <span class="act-year">1986</span>
       <span class="act-slash">/</span>
-      <span class="act-name">一张选票</span>
+      <span class="act-name" id="s7-subtitle">一张选票</span>
     </div>
-    <div class="act-story">
-      <p>蛇口工业区召开管委会换届选举。</p>
-      <p>这在全中国是第一次——<br>
-      <strong>不是上面任命，而是工人投票选出管理者。</strong></p>
-      <p>你手里的这张选票，轻得像一片纸，<br>
-      但在1986年，它比山还重。</p>
+
+    <div class="s6-steps">
+      <span class="s6-step active" id="s7-dot-1"></span>
+      <span class="s6-step" id="s7-dot-2"></span>
+      <span class="s6-step" id="s7-dot-3"></span>
     </div>
-    <!-- S7 根据三值动态渲染：injectS7() 注入 -->
-    <div id="s7-vote-content"></div>
+
+    <!-- Step 1: 背景 -->
+    <div class="s6-panel step-panel" id="s7-p1">
+      <div class="step-body">
+        <p>蛇口工业区召开管委会换届选举。</p>
+        <p>这在全中国是第一次——<br>
+        <strong>不是上面任命，而是工人投票选出管理者。</strong></p>
+        <p>你手里的这张选票，轻得像一片纸，<br>但在1986年，它比山还重。</p>
+      </div>
+      <div class="step-footer">
+        <button class="s6-next-btn" onclick="injectS7()">进入选举现场 →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: 动态注入 -->
+    <div class="s6-panel step-panel" id="s7-p2" style="display:none">
+      <div class="step-body" id="s7-vote-content"></div>
+    </div>
+
+    <!-- Step 3: 结果 -->
+    <div class="s6-panel step-panel" id="s7-p3" style="display:none">
+      <div class="step-body" id="s7-result-content"></div>
+    </div>
   </div>
 </section>
 
@@ -419,26 +467,20 @@
 <section class="screen" id="s8">
   <div class="bg-img" style="background-image:url('assets/bg-factory.jpg');filter:sepia(80%) brightness(.12)"></div>
   <div class="dark-overlay" style="background:rgba(0,0,0,0.72)"></div>
-  <div class="act-content">
+  <div class="act-content step-screen">
     <div class="act-header">
       <span class="act-year">1988</span>
       <span class="act-slash">/</span>
       <span class="act-name" id="s8-tag">蛇口风波</span>
     </div>
-    <div class="act-story">
-      <p id="s8-title" style="font-size:22px;font-weight:900;color:var(--white)">「你们来打工，是自私的」</p>
-      <p id="s8-body">一群大学生来到蛇口礼堂，说：「你们来蛇口打工，是为了个人利益，是自私的。」<br><br>
-      台下的工人们沉默了一会儿，然后——有人站起来反驳。</p>
-      <div class="quote-box" style="border-color:var(--red)">
-        <div class="qb-speaker">阿芳</div>
-        <div class="qb-text" id="s8-afang-quote">「个人利益和国家利益，为什么一定要对立？我搬一箱货，国家出口创了汇——这不是自私，这是蛇口模式。」</div>
-      </div>
+    <!-- 步骤指示器 -->
+    <div class="s6-steps">
+      <span class="s6-step active" id="s8-dot-1"></span>
+      <span class="s6-step" id="s8-dot-2"></span>
+      <span class="s6-step" id="s8-dot-3"></span>
     </div>
-    <div class="choice-row" id="s8-choices">
-      <button class="choice-btn" onclick="finalChoice('clap',this)">👏 鼓掌<br><small>支持这位工人</small></button>
-      <button class="choice-btn" onclick="finalChoice('silent',this)">🤫 沉默<br><small>不表态</small></button>
-      <button class="choice-btn" onclick="finalChoice('doubt',this)">🤔 存疑<br><small>这问题没那么简单</small></button>
-    </div>
+    <!-- injectS8() 写入三个 step-panel -->
+    <div id="s8-content"></div>
   </div>
 </section>
 

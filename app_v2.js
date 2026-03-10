@@ -406,8 +406,8 @@ function goTo(id) {
   if (id === 's3') setTimeout(initTask, 80);
   if (id === 's4') setTimeout(injectS4, 80);
   if (id === 's5') setTimeout(injectS5, 80);
-  if (id === 's6') setTimeout(injectS6, 80);
-  if (id === 's7') setTimeout(injectS7, 80);
+  if (id === 's6') { s6GoStep(1); }
+  if (id === 's7') { s7GoStep(1); }
   if (id === 's8') setTimeout(injectS8, 80);
   if (id === 's9') setTimeout(buildReport, 80);
   if (id === 's10') setTimeout(buildArchiveHall, 80);
@@ -1713,8 +1713,8 @@ function confirmBid() {
   G.archivesUnlocked.add('bidding');
 
   const BID_RESULTS = {
-    A: {
-      val: () => addVal('reform', 1),
+    A: {  // 选最低价：改革+money+1（省钱）
+      val: () => { addVal('reform', 1); addOut('money', 1); },
       text: `中标公告张贴出来：深圳建工一处，报价¥48万，中标。<br><br>
         袁庚主任在公告旁边亲笔写了八个字：<br>
         <strong style="color:var(--gold)">「按价论标，公平竞争。」</strong><br><br>
@@ -1724,8 +1724,8 @@ function confirmBid() {
         1985年，国务院颁布《建设工程招标投标暂行规定》，公开招标制度在全国推行。<br>
         <strong style="color:var(--cream)">蛇口的这一次，是起点。</strong>`
     },
-    B: {
-      val: () => addVal('solidarity', 1),
+    B: {  // 选关系户：信任-1+risk+1（走后门代价）
+      val: () => { addVal('solidarity', 1); addOut('trust', -1); addOut('risk', 1); },
       text: `合同签了，工程开工了。<br>
         广州建总的师傅们手艺不错，按期完工。<br><br>
         只是，三年后审计报告里有一行数字：<br>
@@ -1736,8 +1736,8 @@ function confirmBid() {
         那23%的差价，后来成了课本里的一道例题，<br>
         <strong style="color:var(--cream)">教学生理解「市场竞争」四个字的含义。</strong>`
     },
-    C: {
-      val: () => { addVal('agency', 1); addVal('reform', 1); },
+    C: {  // 选香港外资：改革+risk（挑战舆论）
+      val: () => { addVal('agency', 1); addVal('reform', 1); addOut('risk', 1); },
       text: `消息传出去，舆论哗然。<br>
         「把工程给外国人，这是卖国！」<br><br>
         竣工那天，工期提前了15天，质量验收全优。<br>
@@ -1766,47 +1766,140 @@ function confirmBid() {
 // ══════════════════════════════════════════
 // S6: 幕五·1985·保险（solidarity分支）
 // ══════════════════════════════════════════
-function injectS6() {
-  const extraEl = $('s6-solidarity-event');
-  if (!extraEl) return;
-  if (val('solidarity') >= 2) {
-    // 解锁：帮助受伤工友的额外场景
-    extraEl.style.display = 'block';
-    extraEl.innerHTML = `
-      <div class="quote-box" style="border-color:var(--gold);margin-bottom:16px">
-        <div class="qb-speaker" style="color:var(--gold)">突发事件</div>
-        <div class="qb-text">你的工友老刘在工地受伤了。他没有保险，医药费需要自己垫付。<br>
-        你这个月的工资是32元，医药费需要15元。</div>
-      </div>
-      <div class="choice-row" style="margin-bottom:16px">
-        <button class="choice-btn" onclick="s6HelpFriend(true,this)">
-          🏥 借给他15元
-          <small>工友有难，不能不管</small>
-        </button>
-        <button class="choice-btn" onclick="s6HelpFriend(false,this)">
-          😔 实在拿不出
-          <small>自己也不宽裕</small>
-        </button>
-      </div>`;
-  }
+// ── S6 多步骤翻页控制 ──────────────────────────
+function s6GoStep(n) {
+  const subtitles = { 1:'王福的事故', 2:'诊断书', 3:'你的选择' };
+  [1,2,3].forEach(i => {
+    const p = $('s6-p' + i);
+    const d = $('s6-dot-' + i);
+    if (p) p.style.display = i === n ? 'block' : 'none';
+    if (d) { d.classList.toggle('active', i === n); d.classList.toggle('done', i < n); }
+  });
+  const sub = $('s6-subtitle');
+  if (sub) sub.textContent = subtitles[n] || '王福的事故';
+  // 进入 step3 时注入保险选择
+  if (n === 3) injectS6();
 }
 
-function s6HelpFriend(help, el) {
-  document.querySelectorAll('#s6-solidarity-event .choice-btn').forEach(b => b.classList.remove('selected'));
+function injectS6() {
+  const extraEl = $('s6-solidarity-event');
+  if (!extraEl || extraEl.dataset.injected) return;
+  extraEl.dataset.injected = '1';
+
+  // 隐藏默认的两个选择按钮（由保险选择替代）
+  const def = $('s6-default-choices');
+  if (def) def.style.display = 'none';
+
+  // 张建国专属：先问要不要交保险
+  extraEl.innerHTML = `
+    <div class="quote-box" style="border-color:var(--gold);margin-bottom:16px">
+      <div class="qb-speaker" style="color:var(--gold)">1985年 · 社会保险新规</div>
+      <div class="qb-text">蛇口今年推出了社会保险制度：个人每月缴5%工资，企业配套缴纳。<br>
+      你现在月收入85块，5%就是4块2毛5。一年下来51块，够给弟弟买一学期教科书。<br>
+      <strong>你要交保险吗？</strong></div>
+    </div>
+    <div class="choice-row" style="margin-bottom:16px">
+      <button class="choice-btn" onclick="s6ChooseInsurance(true,this)">
+        🏥 交，有个保障
+        <small>每月少4块，心里踏实</small>
+      </button>
+      <button class="choice-btn" onclick="s6ChooseInsurance(false,this)">
+        💰 不交，省下来寄回家
+        <small>我身体好，不会出事</small>
+      </button>
+    </div>`;
+}
+
+function s6ChooseInsurance(pay, el) {
+  document.querySelectorAll('#s6-solidarity-event .choice-btn').forEach(b => { b.classList.remove('selected'); b.disabled = true; });
   el.classList.add('selected');
-  if (help) {
-    addVal('solidarity', 1);
-    G.choices.s6_help = 'yes';
-    // 工资实际减少（影响结算）
-    G.wage = Math.max(0, G.wage - 15);
+  G.choices.s6_insurance = pay ? 'yes' : 'no';
+
+  if (pay) {
+    addVal('reform', 1);
+    addOut('money', -1); // 每月少4块
+    el.closest('.choice-row').insertAdjacentHTML('afterend', `
+      <p style="font-size:12px;color:rgba(242,232,208,.6);font-style:italic;margin-top:8px">
+      你在表格上打了勾。从这个月起，工资条上多了一行：「社保个人缴纳 -4.25元」。<br>
+      没什么大不了的。你想。有个保障总是好的。</p>
+      <div id="s6-accident-scene" style="margin-top:20px"></div>`);
   } else {
     addVal('agency', 1);
-    G.choices.s6_help = 'no';
+    el.closest('.choice-row').insertAdjacentHTML('afterend', `
+      <p style="font-size:12px;color:rgba(242,232,208,.6);font-style:italic;margin-top:8px">
+      你没交。钱不多，但省下来就是省下来的。弟弟那边还缺教材费。</p>
+      <div id="s6-accident-scene" style="margin-top:20px"></div>`);
   }
+
+  // 延迟注入阿强受伤事件
+  setTimeout(() => {
+    const accidentEl = document.getElementById('s6-accident-scene');
+    if (!accidentEl) return;
+    accidentEl.innerHTML = `
+      <div class="quote-box" style="border-color:#c0392b;margin-bottom:16px">
+        <div class="qb-speaker" style="color:#e74c3c">突发：阿强受伤了</div>
+        <div class="qb-text">下午三点，码头上传来一声闷响。<br>
+        阿强的手被集装箱压了——右手食指骨折，甲床破裂，血流不止。<br>
+        他没有保险。医院说手术费至少要60块。<br>
+        工头说：「自己不小心，公司不负责。」</div>
+      </div>
+      <div class="choice-row">
+        <button class="choice-btn" onclick="s6AfterAccident('help',this)">
+          🤝 大家凑钱帮他
+          <small>工友有难，一起扛</small>
+        </button>
+        <button class="choice-btn" onclick="s6AfterAccident('push',this)">
+          📋 推动公司建立工伤赔付制度
+          <small>不能每次靠众筹，要有规矩</small>
+        </button>
+        <button class="choice-btn" onclick="s6AfterAccident('nothing',this)">
+          😶 没法子，各人管各人
+          <small>自己也才刚够用</small>
+        </button>
+      </div>`;
+  }, 600);
+}
+
+function s6AfterAccident(choice, el) {
+  document.querySelectorAll('#s6-accident-scene .choice-btn').forEach(b => { b.classList.remove('selected'); b.disabled = true; });
+  el.classList.add('selected');
+  G.choices.s6_accident = choice;
+  const insured = G.choices.s6_insurance === 'yes';
+
+  const outcomes = {
+    help: {
+      val: () => { addVal('solidarity', 2); if (insured) addVal('reform', 1); },
+      text: `你带头，大家你五块我十块，凑了65块。<br>阿强哭了，说这辈子没被这样对待过。<br>${insured ? '你后来想：幸好自己交了保险，要不然这次是自己也说不准。' : '你后来想：要是早一点有人交保险，就不用这样凑了。'}`
+    },
+    push: {
+      val: () => { addVal('reform', 2); addVal('solidarity', 1); },
+      text: `你去找了劳资处陈处长。谈了两个小时。<br>他说：「你的意见我记下了。但规定不是一天改的。」<br>三个月后，工地发布了新的工伤赔付补充条款。阿强的手术费，公司补了一半。`
+    },
+    nothing: {
+      val: () => { addVal('agency', 1); addVal('solidarity', -1); },
+      text: `你回到宿舍，躺在床上，听着外面阿强在打电话找家里要钱。<br>你没有出去。有些事，真的管不了。`
+    }
+  };
+
+  const out = outcomes[choice];
+  out.val();
   el.closest('.choice-row').insertAdjacentHTML('afterend',
-    `<p style="font-size:12px;color:rgba(242,232,208,.6);font-style:italic;margin-top:8px">
-    ${help ? '老刘握着你的手，说不出话。这15元，你很久没忘。' : '你低着头走回宿舍，没有开灯。'}
-    </p>`);
+    `<p style="font-size:12px;color:rgba(242,232,208,.6);font-style:italic;margin-top:12px">${out.text}</p>`);
+
+  // 选完后展示历史弹窗 → 进入 S7
+  setTimeout(() => {
+    showHistoryModal(
+      out.text,
+      `1985年，蛇口推出社会保险制度，成为全国首个个人缴费型工伤保险试点。<br>
+      这一制度比全国强制工伤保险早了整整九年。<br>
+      <strong style="color:var(--cream)">你们经历的，就是历史的起点。</strong>`,
+      's7',
+      '进入 1986年 · 民主选举 →',
+      undefined, undefined, 's6',
+      undefined,
+      { npc: '阿强', text: '「那次受伤的事，我没忘。你们没有让我一个人扛。」', actKey: 's6' }
+    );
+  }, 1200);
 }
 
 // ══════════════════════════════════════════
@@ -1817,9 +1910,13 @@ function injectS7() {
   if (!el || el.dataset.injected) return;
   el.dataset.injected = '1';
 
+  // 进入 step2
+  s7GoStep(2);
+
   if (val('reform') >= 2) {
     // 改革路线：你被提名为候选人
     el.innerHTML = `
+      <button class="s6-back-btn" style="margin-bottom:16px" onclick="s7GoStep(1)">← 返回</button>
       <div class="quote-box" style="border-color:var(--red);margin-bottom:16px">
         <div class="qb-speaker" style="color:var(--red)">你被提名了</div>
         <div class="qb-text">「你在蛇口表现突出，工友们推荐你作为管委会候选人。你愿意公开竞选演讲吗？」</div>
@@ -1835,6 +1932,7 @@ function injectS7() {
   } else if (val('solidarity') >= 2) {
     // 集体路线：联合工友推选候选人（3轮对话）
     el.innerHTML = `
+      <button class="s6-back-btn" style="margin-bottom:16px" onclick="s7GoStep(1)">← 返回</button>
       <div class="quote-box" style="border-color:var(--gold);margin-bottom:16px">
         <div class="qb-speaker">工友们找到你</div>
         <div class="qb-text">「我们几个商量了，想联名推荐张大勇竞选管委会。他公道，大家信任他。你怎么看？」</div>
@@ -1850,6 +1948,7 @@ function injectS7() {
   } else {
     // 普通路线：只是投一票，旁观
     el.innerHTML = `
+      <button class="s6-back-btn" style="margin-bottom:16px" onclick="s7GoStep(1)">← 返回</button>
       <p style="color:rgba(242,232,208,.7);font-size:13px;line-height:1.9;margin-bottom:16px">
       你拿着选票，站在投票箱前。台上几个候选人刚刚完成了演讲。<br>
       这是蛇口第一次真正意义上的选举——在这之前，中国没有一个工业区做过这件事。<br>
@@ -1870,10 +1969,27 @@ const S7_HISTORY_TEXT = `1986年的蛇口选举，是中国改革开放以来<br
     新华社记者在场，但报道被压了三个月才发出。<br>
     <strong style="color:var(--cream)">二十年后，这次选举进入了大学教材。</strong>`;
 
+// ── S7 多步骤翻页控制 ──────────────────────────
+function s7GoStep(n) {
+  const subtitles = { 1:'一张选票', 2:'选举现场', 3:'结果' };
+  [1,2,3].forEach(i => {
+    const p = $('s7-p' + i);
+    const d = $('s7-dot-' + i);
+    if (p) p.style.display = i === n ? 'block' : 'none';
+    if (d) { d.classList.toggle('active', i === n); d.classList.toggle('done', i < n); }
+  });
+  const sub = $('s7-subtitle');
+  if (sub) sub.textContent = subtitles[n] || '一张选票';
+}
+
 function showS7History(replyText) {
-  const el2 = $('s7-vote-content');
-  if (el2) el2.insertAdjacentHTML('beforeend', `
-    <p style="color:rgba(242,232,208,.8);font-size:13px;margin-top:16px;font-style:italic;line-height:1.8">${replyText}</p>`);
+  // 跳到 step3，展示结果
+  s7GoStep(3);
+  const el3 = $('s7-result-content');
+  if (el3) el3.innerHTML = `
+    <div class="act-story">
+      <p style="color:rgba(242,232,208,.85);font-size:13px;line-height:1.9;font-style:italic">${replyText}</p>
+    </div>`;
   setTimeout(() => showHistoryModal(replyText, S7_HISTORY_TEXT, 's8', '进入 1988年 · 蛇口风波 →', undefined, undefined, 's7',
     undefined,
     { npc: '阿强', text: '「你那天投票的事，整个工区都传开了。」', actKey: 's7' }
@@ -1924,13 +2040,96 @@ function voteFor(candidate, el) {
 // ══════════════════════════════════════════
 // S8: 幕七·1988·蛇口风波（结局分叉）
 // ══════════════════════════════════════════
+function s8GoStep(n) {
+  const subtitles = { 1:'邮局·汇款后', 2:'礼堂辩论', 3:'你的选择' };
+  [1,2,3].forEach(i => {
+    const p = $('s8-p' + i);
+    const d = $('s8-dot-' + i);
+    if (p) p.style.display = i === n ? 'block' : 'none';
+    if (d) { d.classList.toggle('active', i === n); d.classList.toggle('done', i < n); }
+  });
+  const sub = $('s8-tag');
+  if (sub) sub.textContent = subtitles[n] || '蛇口风波';
+}
+
 function injectS8() {
-  // S8内容已在HTML静态写好，无需JS注入
-  // choices也已静态写好（clap/silent/doubt），直接使用
+  G.archivesUnlocked.add('ARC_S8_NEWS');
+  const el = $('s8-content');
+  if (!el || el.dataset.injected) return;
+  el.dataset.injected = '1';
+
+  el.innerHTML = `
+    <!-- Step 1: 邮局场景 -->
+    <div class="s6-panel step-panel" id="s8-p1">
+      <div class="step-body">
+        <div class="quote-box" style="border-color:var(--gold)">
+          <div class="qb-speaker" style="color:var(--gold)">邮局 · 汇款后</div>
+          <div class="qb-text" style="font-size:13px;line-height:1.9">
+            今天你寄了最后一笔钱回家——弟弟的学费终于凑够了。3000块，分了8次寄。<br>
+            邮局阿姨说：「又是邵阳的？你是我见过寄钱最勤的人。」<br><br>
+            你走出邮局，心里第一次觉得轻。债还了，学费凑了，你妈说村里人开始叫你爸「张老板的爸」。<br><br>
+            路过工业区礼堂的时候，你看见门口挤了一堆人。<br>
+            阿强跑过来：「建国！快来！里面有个大学生说我们是自私的！来打工就是为了钱，是资本主义！」
+          </div>
+        </div>
+      </div>
+      <div class="step-footer">
+        <button class="s6-next-btn" onclick="s8GoStep(2)">进入礼堂 →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: 礼堂辩论 -->
+    <div class="s6-panel step-panel" id="s8-p2" style="display:none">
+      <div class="step-body">
+        <p style="color:rgba(242,232,208,.5);font-size:11px;letter-spacing:2px;margin-bottom:14px">[场景：礼堂。台上一个穿白衬衫的年轻大学生正在慷慨激昂。]</p>
+        <p><strong style="color:var(--white)">大学生：</strong>「你们来蛇口，不就是为了赚钱吗？为了个人利益背井离乡——这跟淘金客有什么区别？真正的建设者，应该有理想，有信仰！」</p>
+        <p style="color:rgba(242,232,208,.5);font-size:11px;margin:10px 0">[台下沉默了几秒。然后有人站起来了。]</p>
+        <p><strong style="color:var(--gold)">老赵（声音不大但很稳）：</strong>「小伙子，你今年多大？」<br>
+        <strong style="color:var(--white)">大学生：</strong>「22。」<br>
+        <strong style="color:var(--gold)">老赵：</strong>「22岁。我来蛇口那年42岁，在武钢干了十五年，月薪42块5，从没变过。我的理想是让女儿读完初中。你知道42块5，够不够？」</p>
+        <p style="color:rgba(242,232,208,.5);font-size:11px;margin:10px 0">[台下开始鼓掌。]</p>
+        <p><strong style="color:var(--red)">阿强（嗓门很大）：</strong>「我就是为了赚钱！我爸妈种了一辈子地，我每月寄60块回去，够他们不弯腰种田了。你说这是自私——那你一月寄多少钱回家？」</p>
+        <p style="color:rgba(242,232,208,.5);font-size:11px;margin:10px 0">[笑声和掌声。]</p>
+        <p><strong style="color:rgba(100,200,100,.8)">陈姐：</strong>「我是凯达厂班长，管着120个女工。她们每月寄钱回家，养老的养老，供学的供学。你说这是自私？这种自私，撑起了半个蛇口。」</p>
+      </div>
+      <div class="step-footer">
+        <button class="s6-back-btn" onclick="s8GoStep(1)">← 返回</button>
+        <button class="s6-next-btn" onclick="s8GoStep(3)">轮到你了 →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: 你的选择 -->
+    <div class="s6-panel step-panel" id="s8-p3" style="display:none">
+      <div class="step-body">
+        <p style="font-size:13px;color:rgba(242,232,208,.75);line-height:1.9;margin-bottom:16px">
+          你坐在台下，手里攥着汇款回执。<br>
+          3000块。弟弟的学费。四年。<br><br>
+          你赚钱是为了自己吗？是。但也不全是。<br>
+          你和身边这些人——搬运工、女工、老工人——好像真的改变了什么。
+        </p>
+        <div class="choice-row">
+          <button class="choice-btn" onclick="finalChoice('clap',this)">
+            👏 站起来鼓掌<small>「说得好！多劳多得不是自私！」</small>
+          </button>
+          <button class="choice-btn" onclick="finalChoice('standup',this)">
+            ✊ 站起来发言<small>「我搬了四年货，供弟弟上了大学。这叫什么？」</small>
+          </button>
+          <button class="choice-btn" onclick="finalChoice('silent',this)">
+            🤫 沉默<small>坐着不动。你不善言辞。</small>
+          </button>
+          <button class="choice-btn" onclick="finalChoice('doubt',this)">
+            🤔 存疑<small>「他说的也不全错。光赚钱不是长久之计。」</small>
+          </button>
+        </div>
+      </div>
+    </div>`;
+
+  // 初始化 step1
+  s8GoStep(1);
 }
 
 function finalChoice(key, el) {
-  document.querySelectorAll('#s8 .choice-btn').forEach(b => { b.classList.remove('selected'); b.disabled = true; });
+  document.querySelectorAll('#s8-p3 .choice-btn').forEach(b => { b.classList.remove('selected'); b.disabled = true; });
   el.classList.add('selected');
   G.choices.s8 = key;
   G.archivesUnlocked.add('fengbo');
@@ -1972,7 +2171,7 @@ function makeChoiceVal(screen, choice, el) {
   // ── S4 合同 ──────────────────────────────
   const S4_RESULTS = {
     sign: {
-      val: () => addVal('reform', 1),
+      val: () => { addVal('reform', 1); addOut('money', 1); }, // 合同保障，收入稳定
       text: `你在第一行签上了自己的名字。<br><br>
         笔放下的那一刻，你感到一种奇怪的轻——<br>
         铁饭碗没了，但压在铁饭碗上的那块石头，也没了。<br><br>
@@ -1985,7 +2184,7 @@ function makeChoiceVal(screen, choice, el) {
       next: 's5', nextLabel: '进入 1984年 · 公开招标 →'
     },
     collective: {
-      val: () => { addVal('solidarity', 2); G.archivesUnlocked.add('contract_negotiated'); },
+      val: () => { addVal('solidarity', 2); addOut('trust', 1); G.archivesUnlocked.add('contract_negotiated'); }, // 集体谈判，获得信任
       ttsKey: 's4b',
       text: `你和七个工友联名，要求将合同期从一年延长为两年。<br><br>
         劳资处沉默了三天。<br>
@@ -1999,7 +2198,7 @@ function makeChoiceVal(screen, choice, el) {
       next: 's5', nextLabel: '进入 1984年 · 公开招标 →'
     },
     negotiate: {
-      val: () => { addVal('agency', 2); G.archivesUnlocked.add('contract_negotiated'); },
+      val: () => { addVal('agency', 2); addOut('risk', 1); G.archivesUnlocked.add('contract_negotiated'); }, // 个人谈判，冒险博弈
       text: `你在签字前，在第三条下面写下一行字：<br>
         「解除合同需提前三十天书面通知。」<br><br>
         劳资处的人皱了皱眉，打了个电话，沉默了很久，<br>
@@ -2018,7 +2217,7 @@ function makeChoiceVal(screen, choice, el) {
   // ── S6 保险 ──────────────────────────────
   const S6_RESULTS = {
     help: {
-      val: () => addVal('solidarity', 1),
+      val: () => { addVal('solidarity', 1); addOut('money', -1); addOut('trust', 1); }, // 凑钱帮人：花钱+信任
       text: `七个工友，每人出了几块钱。<br>王福的手术费凑够了。<br><br>
         那天晚上，大家在宿舍喝了瓶汽水，<br>
         没什么人说话，但都没有早睡。<br><br>
@@ -2030,7 +2229,7 @@ function makeChoiceVal(screen, choice, el) {
       next: 's7', nextLabel: '进入 1986年 · 民主选举 →'
     },
     insurance: {
-      val: () => addVal('reform', 1),
+      val: () => { addVal('reform', 1); addOut('risk', 1); }, // 推动制度：改革+风险
       text: `你写了一封信给管委会，<br>
         附上了王福的诊断书和那张收费单据。<br><br>
         信里只有一个问题：<br>
@@ -2074,13 +2273,13 @@ function showHistoryResult(screen, result) {
 
 // 视频素材映射（有了就用，没有就显示纯色背景）
 const SCENE_VIDEOS = {
-  's2': 'assets/scenes/s2_1979_炸山爆破_有声.mp4',
-  's3': 'assets/scenes/s3_1981_码头搬货_有声.mp4',
-  's4': 'assets/scenes/s4_1983_签劳动合同_有声.mp4',
-  's5': 'assets/scenes/s5_1984_工地建设_有声.mp4',
-  's6': 'assets/scenes/s6_1985_工伤保险_静音.mp4',
-  's7': 'assets/scenes/s7_1986_民主选举_有声.mp4',
-  's8': 'assets/scenes/s8_1988_礼堂辩论_有声.mp4',
+  's2': 'assets/scenes/S2_1979年_炸山爆破.mp4',
+  's3': 'assets/scenes/S3_1981年_码头搬运.mp4',
+  's4': 'assets/scenes/S4_1983年_签劳动合同.mp4',
+  's5': 'assets/scenes/S5_1984年_工地建设招标.mp4',
+  's6': 'assets/scenes/S6_1985年_工伤保险.mp4',
+  's7': 'assets/scenes/S7_1986年_民主选举.mp4',
+  's8': 'assets/scenes/S8_1988年_蛇口风波礼堂.mp4',
 };
 
 function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, currentScreen, ttsKeyOverride, echoData) {
@@ -2094,11 +2293,12 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
   const vid = videoSrc || SCENE_VIDEOS[currentScreen] || null;  // 只用currentScreen，不fallback到nextScreen
   // 有声音的视频列表（保留原声，不muted）
   const WITH_AUDIO = new Set([
-    'assets/scenes/s2_1979_炸山爆破_有声.mp4',
-    'assets/scenes/s3_1981_码头搬货_有声.mp4',
-    'assets/scenes/s4_1983_签劳动合同_有声.mp4',
-    'assets/scenes/s5_1984_工地建设_有声.mp4',
-    'assets/scenes/s7_1986_民主选举_有声.mp4',
+    'assets/scenes/S2_1979年_炸山爆破.mp4',
+    'assets/scenes/S3_1981年_码头搬运.mp4',
+    'assets/scenes/S4_1983年_签劳动合同.mp4',
+    'assets/scenes/S5_1984年_工地建设招标.mp4',
+    'assets/scenes/S7_1986年_民主选举.mp4',
+    'assets/scenes/S8_1988年_蛇口风波礼堂.mp4',
   ]);
   const hasAudio = vid && WITH_AUDIO.has(vid);
   const YEAR_MAP = {'s2':'1979','s3':'1981','s4':'1983','s5':'1984','s6':'1985','s7':'1986','s8':'1988','s9':'结算'};
@@ -2112,7 +2312,7 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
       ${vid ? `
       <div class="hm-video-wrap">
         <video src="${vid}" autoplay muted playsinline
-          id="hmVid" style="opacity:.7"></video>
+          id="hmVid"></video>
         <div class="hm-video-overlay"></div>
         <div class="hm-video-year">${yearLabel}</div>
       </div>` : `
@@ -2120,18 +2320,20 @@ function showHistoryModal(text, history, nextScreen, nextLabel, videoSrc, year, 
         <div class="hm-video-year" style="position:static;font-size:64px;opacity:.15">${yearLabel}</div>
       </div>`}
 
-      <div class="hm-body">
-        <p class="hm-narrative" id="hmNarrative"></p>
-        <div class="hm-divider"></div>
-        <span class="hm-history-label">── 历史回响 ──</span>
-        <p class="hm-history-text">${history}</p>
-      </div>
-
-      <div class="hm-footer">
-        <button class="hm-close" onclick="Audio.stopSpeak();SFX.stopTypewriter();const t=document.getElementById('ttsPlayer');if(t){t.pause();t.remove();}document.getElementById('historyModal').remove()" title="关闭，停留在当前页">✕</button>
-        <button class="hm-next" id="historyNextBtn"
-          onclick="Audio.stopSpeak();SFX.stopTypewriter();const tp=document.getElementById('ttsPlayer');if(tp){tp.pause();tp.remove();}document.getElementById('historyModal').remove();if(window._nextEcho){G.lastEcho=window._nextEcho;window._nextEcho=null;}transition(()=>goTo('${nextScreen}'))"
-          disabled>${nextLabel} (3)</button>
+      <!-- 右侧：文字+按钮（flex列，自带overflow） -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;">
+        <div class="hm-body">
+          <p class="hm-narrative" id="hmNarrative"></p>
+          <div class="hm-divider"></div>
+          <span class="hm-history-label">── 历史回响 ──</span>
+          <p class="hm-history-text">${history}</p>
+        </div>
+        <div class="hm-footer">
+          <button class="hm-close" onclick="Audio.stopSpeak();SFX.stopTypewriter();const t=document.getElementById('ttsPlayer');if(t){t.pause();t.remove();}document.getElementById('historyModal').remove()" title="关闭，停留在当前页">✕</button>
+          <button class="hm-next" id="historyNextBtn"
+            onclick="Audio.stopSpeak();SFX.stopTypewriter();const tp=document.getElementById('ttsPlayer');if(tp){tp.pause();tp.remove();}document.getElementById('historyModal').remove();if(window._nextEcho){G.lastEcho=window._nextEcho;window._nextEcho=null;}transition(()=>goTo('${nextScreen}'))"
+            disabled>${nextLabel} (3)</button>
+        </div>
       </div>
     </div>`;
   document.body.appendChild(modal);
